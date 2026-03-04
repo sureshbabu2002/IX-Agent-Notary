@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
 	"path/filepath"
 
 	"ix-agent-notary/internal/canon"
@@ -85,7 +84,7 @@ func Run(opts Options) error {
 		return err
 	}
 
-	return writeReceipt(opts.OutPath, r)
+	return receipt.Write(opts.OutPath, r)
 }
 
 func setCoreHashes(r receipt.Receipt, hc *receipt.HashCheck) error {
@@ -167,17 +166,5 @@ func setSignatureValue(r receipt.Receipt, sig string) error {
 		return errors.New("missing integrity.signature object")
 	}
 	sigObj["value"] = sig
-	return nil
-}
-
-func writeReceipt(path string, r receipt.Receipt) error {
-	out, err := json.MarshalIndent(r, "", "  ")
-	if err != nil {
-		return fmt.Errorf("marshal output: %w", err)
-	}
-	out = append(out, byte('\n'))
-	if err := os.WriteFile(path, out, 0o644); err != nil {
-		return fmt.Errorf("write output: %w", err)
-	}
 	return nil
 }

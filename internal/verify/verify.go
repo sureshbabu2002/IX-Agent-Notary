@@ -12,15 +12,18 @@ import (
 )
 
 type Options struct {
-	ReceiptPath  string
-	SchemaPath   string
-	StrictHashes bool
+	ReceiptPath      string
+	SchemaPath       string
+	StrictHashes     bool
+	StrictSignature  bool
+	PublicKeyPathOpt string
 }
 
 type Result struct {
 	ReceiptPath string
 	SchemaPath  string
 	Hashes      receipt.HashCheck
+	Signature   receipt.SignatureCheck
 }
 
 func Run(opts Options) (*Result, error) {
@@ -50,12 +53,20 @@ func Run(opts Options) (*Result, error) {
 		return nil, err
 	}
 
-	// NOTE: cryptographic signature verification is intentionally not implemented in this commit.
-	// Upcoming commits will:
-	// - verify integrity.signature.value against integrity.signature.key_id
-	// - validate receipt chaining (parent_receipt_id) and optional artifact hashes
+	sc, err := receipt.ValidateSignature(r, receipt.SignatureValidationOptions{
+		Strict:        opts.StrictSignature,
+		PublicKeyPath: opts.PublicKeyPathOpt,
+	})
+	if err != nil {
+		return nil, err
+	}
 
-	return &Result{ReceiptPath: opts.ReceiptPath, SchemaPath: opts.SchemaPath, Hashes: *hc}, nil
+	return &Result{
+		ReceiptPath: opts.ReceiptPath,
+		SchemaPath:  opts.SchemaPath,
+		Hashes:      *hc,
+		Signature:   *sc,
+	}, nil
 }
 
 func compileSchema(schemaPath string) (*jsonschema.Schema, error) {
@@ -72,9 +83,7 @@ func compileSchema(schemaPath string) (*jsonschema.Schema, error) {
 
 	c := jsonschema.NewCompiler()
 
-	// Use a stable internal URL for compilation. The schema content is loaded from disk.
 	const schemaURL = "https://ix-agent-notary.local/spec/receipt.schema.json"
-
 	if err := c.AddResource(schemaURL, f); err != nil {
 		return nil, fmt.Errorf("add schema resource: %w", err)
 	}

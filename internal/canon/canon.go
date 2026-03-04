@@ -10,9 +10,9 @@ import (
 // CanonicalizeRFC8785 converts a JSON value into RFC 8785 (JCS) canonical bytes.
 //
 // Important:
-// - Pass native JSON-compatible Go values (string, float64, bool, nil, []any, map[string]any),
-//   typically produced by json.Unmarshal.
-// - If you have raw JSON bytes, pass them as []byte and they will be decoded first.
+//   - Pass native JSON-compatible Go values (string, float64, bool, nil, []any, map[string]any),
+//     typically produced by json.Unmarshal.
+//   - If you have raw JSON bytes, pass them as []byte and they will be decoded first.
 func CanonicalizeRFC8785(v any) ([]byte, error) {
 	// If caller passed raw JSON bytes, decode first.
 	if t, ok := v.([]byte); ok {

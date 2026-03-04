@@ -13,7 +13,8 @@ import (
 
 // SignApprovalInPlace signs a single approval object and writes/overwrites approval.signature.
 //
-// Signature payload = RFC8785 canonical JSON of the approval object *excluding* signature.value.
+// Signature payload = RFC8785 canonical JSON of the approval object excluding signature.value,
+// but INCLUDING signature.alg and signature.key_id (so verifiers can bind metadata to the signature).
 func SignApprovalInPlace(approval map[string]any, seedPath string, keyID string) error {
 	if approval == nil {
 		return errors.New("approval sign: approval is nil")
@@ -41,6 +42,12 @@ func SignApprovalInPlace(approval map[string]any, seedPath string, keyID string)
 	}
 
 	priv := ed25519.NewKeyFromSeed(seed)
+
+	// IMPORTANT: include signature metadata in the signed payload, excluding only signature.value.
+	approval["signature"] = map[string]any{
+		"alg":    "ed25519",
+		"key_id": keyID,
+	}
 
 	payload, err := receipt.CanonicalizeApprovalForSigning(approval)
 	if err != nil {

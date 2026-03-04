@@ -45,6 +45,7 @@ func verifyCmd(args []string) {
 	schemaPath := fs.String("schema", "", "path to receipt JSON Schema (default: spec/receipt.schema.json)")
 	strictHashes := fs.Bool("strict-hashes", false, "fail if parameters_hash/output_hash are placeholders or missing")
 	strictSig := fs.Bool("strict-signature", false, "fail if signature is missing/placeholder or public key can't be resolved")
+	strictApprovals := fs.Bool("strict-approvals", false, "fail if any approval is missing a valid signature")
 	pubKeyPath := fs.String("pubkey", "", "optional path to an ed25519 public key (base64url). Overrides key lookup by key_id.")
 	strictChain := fs.Bool("strict-chain", false, "verify parent_receipt_id chain (loads parent receipts from --chain-dir or receipt directory). Implies strict hashes+signature for the leaf.")
 	chainDir := fs.String("chain-dir", "", "directory to search for parent receipts (default: directory containing the receipt)")
@@ -68,6 +69,7 @@ func verifyCmd(args []string) {
 		SchemaPath:       *schemaPath,
 		StrictHashes:     *strictHashes,
 		StrictSignature:  *strictSig,
+		StrictApprovals:  *strictApprovals,
 		PublicKeyPathOpt: *pubKeyPath,
 		StrictChain:      *strictChain,
 		ChainDir:         *chainDir,
@@ -91,6 +93,14 @@ func verifyCmd(args []string) {
 		notes = append(notes, "signature ok")
 	}
 
+	if res.Approvals.Skipped {
+		notes = append(notes, "approvals skipped")
+	} else if res.Approvals.Total == 0 {
+		notes = append(notes, "approvals none")
+	} else {
+		notes = append(notes, fmt.Sprintf("approvals ok (%d/%d)", res.Approvals.Verified, res.Approvals.Total))
+	}
+
 	if res.Chain.Skipped {
 		notes = append(notes, "chain skipped")
 	} else {
@@ -106,6 +116,7 @@ func verifyDirCmd(args []string) {
 
 	schemaPath := fs.String("schema", "", "path to receipt JSON Schema (default: spec/receipt.schema.json)")
 	pubKeyPath := fs.String("pubkey", "", "optional path to an ed25519 public key (base64url). Overrides key lookup by key_id.")
+	strictApprovals := fs.Bool("strict-approvals", false, "fail if any approval is missing a valid signature")
 	strictChain := fs.Bool("strict-chain", true, "verify parent_receipt_id linkage for all receipts found (default: true)")
 
 	if err := fs.Parse(args); err != nil {
@@ -128,6 +139,7 @@ func verifyDirCmd(args []string) {
 		PublicKeyPath:   *pubKeyPath,
 		StrictHashes:    true,
 		StrictSignature: true,
+		StrictApprovals: *strictApprovals,
 		StrictChain:     *strictChain,
 	})
 	if err != nil {
@@ -211,21 +223,21 @@ func simulateCmd(args []string) {
 	}
 
 	if err := simulate.Run(simulate.Options{
-		PolicyPath:       *policyPath,
-		OutPath:          *outPath,
-		Kind:             *kind,
-		Tool:             *tool,
-		Operation:        *operation,
-		Path:             *path,
-		Bytes:            *bytes,
-		ActorID:          *actorID,
-		SessionID:        *sessionID,
-		NotaryInst:       *notaryInst,
-		SignKeyPath:      *keyPath,
-		SignKeyID:        *keyID,
-		IncludeApproval:  *approve,
-		ApproverID:       *approver,
-		ApprovalType:     *approvalType,
+		PolicyPath:      *policyPath,
+		OutPath:         *outPath,
+		Kind:            *kind,
+		Tool:            *tool,
+		Operation:       *operation,
+		Path:            *path,
+		Bytes:           *bytes,
+		ActorID:         *actorID,
+		SessionID:       *sessionID,
+		NotaryInst:      *notaryInst,
+		SignKeyPath:     *keyPath,
+		SignKeyID:       *keyID,
+		IncludeApproval: *approve,
+		ApproverID:      *approver,
+		ApprovalType:    *approvalType,
 	}); err != nil {
 		fmt.Fprintf(os.Stderr, "FAIL: %v\n", err)
 		os.Exit(1)
@@ -259,6 +271,7 @@ func storeAppendCmd(args []string) {
 	logPath := fs.String("log", "", "append-only JSONL log path (required)")
 	schemaPath := fs.String("schema", "", "path to receipt JSON Schema (default: spec/receipt.schema.json)")
 	pubKeyPath := fs.String("pubkey", "", "optional path to an ed25519 public key (base64url). Overrides key lookup by key_id.")
+	strictApprovals := fs.Bool("strict-approvals", false, "fail if any approval is missing a valid signature (before ingest)")
 
 	if err := fs.Parse(args); err != nil {
 		os.Exit(2)
@@ -278,6 +291,7 @@ func storeAppendCmd(args []string) {
 		SchemaPath:       *schemaPath,
 		StrictHashes:     true,
 		StrictSignature:  true,
+		StrictApprovals:  *strictApprovals,
 		PublicKeyPathOpt: *pubKeyPath,
 	}); err != nil {
 		fmt.Fprintf(os.Stderr, "FAIL: receipt did not verify strictly; not ingesting: %v\n", err)
@@ -306,6 +320,7 @@ func storeVerifyLogCmd(args []string) {
 	schemaPath := fs.String("schema", "", "path to receipt JSON Schema (default: spec/receipt.schema.json)")
 	pubKeyPath := fs.String("pubkey", "", "optional path to an ed25519 public key (base64url). Overrides key lookup by key_id.")
 	strictChain := fs.Bool("strict-chain", true, "verify parent_receipt_id linkage within the log (default: true)")
+	strictApprovals := fs.Bool("strict-approvals", false, "fail if any approval is missing a valid signature")
 
 	if err := fs.Parse(args); err != nil {
 		os.Exit(2)
@@ -351,9 +366,10 @@ func storeVerifyLogCmd(args []string) {
 
 	// Strictly validate all receipts.
 	for rid, r := range byID {
-		_, _, verr := verify.ValidateReceiptObject(r, schema, verify.ReceiptValidationOptions{
+		_, _, _, verr := verify.ValidateReceiptObject(r, schema, verify.ReceiptValidationOptions{
 			StrictHashes:    true,
 			StrictSignature: true,
+			StrictApprovals: *strictApprovals,
 			PublicKeyPath:   *pubKeyPath,
 		})
 		if verr != nil {
@@ -370,9 +386,10 @@ func storeVerifyLogCmd(args []string) {
 		}
 
 		validateParent := func(r receipt.Receipt) error {
-			_, _, verr := verify.ValidateReceiptObject(r, schema, verify.ReceiptValidationOptions{
+			_, _, _, verr := verify.ValidateReceiptObject(r, schema, verify.ReceiptValidationOptions{
 				StrictHashes:    true,
 				StrictSignature: true,
+				StrictApprovals: *strictApprovals,
 				PublicKeyPath:   *pubKeyPath,
 			})
 			return verr
@@ -397,7 +414,7 @@ func usage() {
 	fmt.Fprintln(os.Stderr, "  ix-an <command> [options]")
 	fmt.Fprintln(os.Stderr)
 	fmt.Fprintln(os.Stderr, "Commands:")
-	fmt.Fprintln(os.Stderr, "  verify        Validate a receipt (schema + hashes + signature + optional chain)")
+	fmt.Fprintln(os.Stderr, "  verify        Validate a receipt (schema + hashes + signature + approvals + optional chain)")
 	fmt.Fprintln(os.Stderr, "  verify-dir    Validate all receipts in a directory (strict by default)")
 	fmt.Fprintln(os.Stderr, "  sign          Compute hashes + sign a receipt (ed25519)")
 	fmt.Fprintln(os.Stderr, "  simulate      Simulate a tool action through PolicyGate and emit a signed receipt")

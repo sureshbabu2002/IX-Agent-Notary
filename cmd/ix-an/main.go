@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"ix-agent-notary/internal/sign"
+	"ix-agent-notary/internal/simulate"
 	"ix-agent-notary/internal/verify"
 )
 
@@ -20,6 +21,8 @@ func main() {
 		verifyCmd(os.Args[2:])
 	case "sign":
 		signCmd(os.Args[2:])
+	case "simulate":
+		simulateCmd(os.Args[2:])
 	case "help", "-h", "--help":
 		usage()
 	default:
@@ -115,6 +118,57 @@ func signCmd(args []string) {
 	fmt.Println("OK: wrote signed receipt:", *outPath)
 }
 
+func simulateCmd(args []string) {
+	fs := flag.NewFlagSet("simulate", flag.ContinueOnError)
+	fs.SetOutput(os.Stderr)
+
+	policyPath := fs.String("policy", "policy/demo.policy.json", "path to policy JSON (default: policy/demo.policy.json)")
+	outPath := fs.String("out", "", "output receipt JSON path")
+	kind := fs.String("kind", "tool.invoke", "action kind (default: tool.invoke)")
+	tool := fs.String("tool", "filesystem", "tool name (default: filesystem)")
+	operation := fs.String("op", "file.write", "operation name (default: file.write)")
+	path := fs.String("path", "", "target path for the simulated write (required)")
+	bytes := fs.Int("bytes", 0, "byte count for the simulated write (optional)")
+	actorID := fs.String("actor", "agent:demo", "actor id (default: agent:demo)")
+	sessionID := fs.String("session", "sess-demo-001", "session id (default: sess-demo-001)")
+	notaryInst := fs.String("notary", "notary-local-001", "notary instance id (default: notary-local-001)")
+	keyPath := fs.String("key", "keys/dev/dev-key-001.seed", "ed25519 seed key path (default: keys/dev/dev-key-001.seed)")
+	keyID := fs.String("key-id", "dev-key-001", "signature key_id to use (default: dev-key-001)")
+
+	if err := fs.Parse(args); err != nil {
+		os.Exit(2)
+	}
+
+	if *outPath == "" || *path == "" {
+		fmt.Fprintln(os.Stderr, "simulate requires --out and --path")
+		fmt.Fprintln(os.Stderr)
+		fmt.Fprintln(os.Stderr, "Examples:")
+		fmt.Fprintln(os.Stderr, "  ix-an simulate --path docs/demo.txt --out /tmp/allow.receipt.json")
+		fmt.Fprintln(os.Stderr, "  ix-an simulate --path .env        --out /tmp/deny.receipt.json")
+		os.Exit(2)
+	}
+
+	if err := simulate.Run(simulate.Options{
+		PolicyPath: *policyPath,
+		OutPath:    *outPath,
+		Kind:       *kind,
+		Tool:       *tool,
+		Operation:  *operation,
+		Path:       *path,
+		Bytes:      *bytes,
+		ActorID:    *actorID,
+		SessionID:  *sessionID,
+		NotaryInst: *notaryInst,
+		SignKeyPath:*keyPath,
+		SignKeyID:  *keyID,
+	}); err != nil {
+		fmt.Fprintf(os.Stderr, "FAIL: %v\n", err)
+		os.Exit(1)
+	}
+
+	fmt.Println("OK: wrote simulated signed receipt:", *outPath)
+}
+
 func usage() {
 	fmt.Fprintln(os.Stderr, "IX-Agent-Notary (ix-an)")
 	fmt.Fprintln(os.Stderr)
@@ -122,9 +176,10 @@ func usage() {
 	fmt.Fprintln(os.Stderr, "  ix-an <command> [options]")
 	fmt.Fprintln(os.Stderr)
 	fmt.Fprintln(os.Stderr, "Commands:")
-	fmt.Fprintln(os.Stderr, "  verify   Validate a receipt (schema + hashes + signature)")
-	fmt.Fprintln(os.Stderr, "  sign     Compute hashes + sign a receipt (ed25519)")
-	fmt.Fprintln(os.Stderr, "  help     Show this help")
+	fmt.Fprintln(os.Stderr, "  verify     Validate a receipt (schema + hashes + signature)")
+	fmt.Fprintln(os.Stderr, "  sign       Compute hashes + sign a receipt (ed25519)")
+	fmt.Fprintln(os.Stderr, "  simulate   Simulate a tool action through PolicyGate and emit a signed receipt")
+	fmt.Fprintln(os.Stderr, "  help       Show this help")
 	fmt.Fprintln(os.Stderr)
 }
 

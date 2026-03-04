@@ -1,13 +1,13 @@
 {
   "receipt_version": "0.1.0",
-  "receipt_id": "ed8e9bfe-3bf4-4e6d-93e2-2d3b1e8a6cbb",
+  "receipt_id": "e85d320c-3a99-4d9f-b917-f0ef86e7ab29",
   "time": {
     "requested_at": "2026-03-02T00:00:00Z",
     "decided_at": "2026-03-02T00:00:00Z",
     "completed_at": "2026-03-02T00:00:00Z"
   },
   "trace": {
-    "trace_id": "2b2f7f78-e0b0-4ce9-8c5a-4b9a4a4f7d2d",
+    "trace_id": "c8ac9f2b-1e49-4c7c-9a9d-0f6e6a4b0c24",
     "step": 1
   },
   "actor": {
@@ -31,12 +31,12 @@
       "bytes": 7,
       "content_redacted": true
     },
-    "parameters_hash": "sha256:5y1_2-5v_0b4bA2GfQx3yqv6Qh1C2qgB9f3G7tq6uF0"
+    "parameters_hash": "sha256:Qm2jA6bJY1lq2R9tKQx3c3l9JYp6u0aXb3m3Pp0J7m4"
   },
   "policy": {
     "policy_id": "demo-policy-001",
     "decision": "allow",
-    "reason": "allowed with approval evidence",
+    "reason": "path allowed (docs/*)",
     "rules": [
       {
         "rule_id": "allow-docs",
@@ -46,7 +46,7 @@
     ],
     "approvals": [
       {
-        "approval_id": "e2b8d0e3-f4d3-4b57-9b55-31c8f8e9d1f0",
+        "approval_id": "f4e1d4c8-9f1f-4e0e-ae47-f5e9f9de9d0d",
         "type": "ticket",
         "status": "approved",
         "approver": {
@@ -68,15 +68,13 @@
         "signature": {
           "alg": "ed25519",
           "key_id": "dev-key-001",
-          "value": "DSOaQBCjLKRgV6C2v4gGq4oF5UeNQhU4GqYbQ7yqFh4n7Xv7Pq0a5m2o9zR4dF0kqZt8vEwD7aTt5p0cYy8yBQ"
+          "value": "pxqvZ84nSl90WCQTniFDoF-wprtZeoaogbFlh5Kqp_TBQ-QwG6X-BfMKAH0n2bpwE75cJVhdxd6OO-ujWqV2BQ"
         }
       }
     ],
     "context_hashes": {
-      "requested_path": "sha256:xQ2B5H1k1qYq3q2xR2s7xk8QvJb9v2n3lVQy8mVd0iA"
-    },
-    "policy_hash": "sha256:i7EP3ZB8oVqP2XUXS7P_ywlTpvKzvO1EXkQk2N4C2EE",
-    "policy_source": "policy/demo.policy.json"
+      "requested_path": "sha256:6Q3N9mR5UoVYq3oD1yqg9m5JcVwqjQkY2p0V5YpT8sQ"
+    }
   },
   "result": {
     "status": "success",
@@ -86,7 +84,7 @@
       "written": true,
       "content_redacted": true
     },
-    "output_hash": "sha256:Yx7aQf4m9g2b0c2Zf3l1n6t8p0q1r2s3t4u5v6w7x8Y"
+    "output_hash": "sha256:1Vh1qXq2Yg0jQw4rG0Kxg8Q4j9WfQwzqQv3mZl3lQpM"
   },
   "integrity": {
     "canonicalization": "RFC8785-JCS",
@@ -97,7 +95,7 @@
     "signature": {
       "alg": "ed25519",
       "key_id": "dev-key-001",
-      "value": "KQm7r6tJ2q7p7b8h3b8x2s2H6q5w1Yx0yZ3v7q4b6p8u9r0s1t2u3v4w5x6y7z8a9b0c1d2e3f4g5h6i7j8k9lA"
+      "value": "mP-7qZlY7Sg5c0GkzZlqk7iH0o2j3w7JHq8xqJdQ7b0uF5wE8Jm5u1eT4n4pJ5cW7w8mHk7p3mGqv9Zt6d9AQ"
     }
   }
 }

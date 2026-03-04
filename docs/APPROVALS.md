@@ -35,27 +35,15 @@ Each approval is a JSON object with these required fields:
 Optional fields:
 - `notes` (string)
 - `signature` (object)
-  - `alg` (string) — e.g. `ed25519`
+  - `alg` (string) — `ed25519`
   - `key_id` (string)
-  - `value` (string) — signature over a canonicalized approval payload (future: normative spec)
+  - `value` (string) — signature over canonical approval payload (RFC8785), excluding `signature.value`
 
 ---
 
-## Why approvals matter (real buyer value)
+## Approval signatures (what’s implemented now)
 
-Approvals turn receipts into **auditable governance artifacts**:
-- SOC2 / ISO27001 evidence
-- Change-management linkage (ticket approvals)
-- Break-glass logging (incident time access)
-- Least-privilege + “two person rule” patterns (future extension)
-
----
-
-## Demo support
-`ix-an simulate` can optionally embed an approval record using `--approve`.
-
-This is intentionally minimal, but the structure is designed so a real deployment can plug in:
-- Jira/ServiceNow change approvals
-- GitHub PR approvals
-- Cloud IAM justifications / access requests
-- KMS/HSM-backed approval signatures
+### 1) Simulator emits signed approvals
+When you run:
+```bash
+ix-an simulate ... --approve

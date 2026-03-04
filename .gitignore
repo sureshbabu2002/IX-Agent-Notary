@@ -1,38 +1,15 @@
-# OS / misc
-.DS_Store
-Thumbs.db
-
-# Editor / IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# Logs
-*.log
-
-# Node (if used later)
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Python (if used later)
-__pycache__/
-*.py[cod]
-.venv/
-venv/
-.env
-
-# Go (if used later)
-bin/
-dist/
+# --- Go ---
+/bin/
+/dist/
+/tmp/
 *.exe
-*.out
 *.test
+*.out
 
-# Build artifacts (generic)
-build/
-coverage/
-.tmp/
-tmp/
+# --- IX-Agent-Notary local demo artifacts (DO NOT COMMIT) ---
+/keys/dev/*.seed
+/keys/dev/*.pub
+!/keys/dev/.gitkeep
+
+/examples/receipts/*.json
+!/examples/receipts/.gitkeep

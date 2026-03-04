@@ -1,0 +1,73 @@
+IX-AGENT-NOTARY EVALUATION LICENSE (SOURCE-AVAILABLE) — v1.0
+
+Copyright (c) 2026 Bryce Lovell.
+All rights reserved.
+
+IMPORTANT: READ CAREFULLY. BY USING, COPYING, MODIFYING, OR DISTRIBUTING ANY PORTION OF THIS SOFTWARE,
+YOU AGREE TO THE TERMS OF THIS LICENSE.
+
+1) DEFINITIONS
+“Licensor” means the copyright holder(s) of the Software.
+“Software” means the IX-Agent-Notary source code, binaries, documentation, examples, and any other materials
+in this repository.
+“Use” means to install, execute, compile, run, copy, modify, or otherwise make use of the Software.
+“Evaluation” means non-commercial testing and internal technical assessment to determine suitability for
+possible licensing, including proof-of-concept and lab testing.
+“Production” means any use that supports real operational workloads, end users, customers, revenue-generating
+activities, or business-critical processes.
+“Commercial Use” means any Production use and/or any use intended for sale, licensing, monetization, hosting,
+offering as a service, or embedding into a product or service (whether internal or external).
+“Distribute” means to provide a copy of the Software or derivative works to any third party (including
+publishing to a public repository), whether for free or for a fee.
+“Affiliate” means any entity that controls, is controlled by, or is under common control with a party.
+
+2) LICENSE GRANT (EVALUATION ONLY)
+Subject to full compliance with this License, the Licensor grants you a limited, non-exclusive,
+non-transferable, non-sublicensable, revocable license to Use the Software solely for Evaluation.
+You may modify the Software for internal Evaluation and may create internal derivative works for Evaluation.
+
+3) RESTRICTIONS
+You must NOT, and must NOT permit any third party (including Affiliates) to:
+
+A) Use the Software for Production or any Commercial Use.
+B) Offer the Software (or any derivative) as a hosted service, SaaS, managed service, or API.
+C) Distribute, sublicense, sell, rent, lease, or otherwise transfer the Software or derivatives to any third party.
+D) Remove, obscure, or alter any copyright, license, or attribution notices.
+E) Publicly benchmark, publish performance results, or publish security test results of the Software without
+   the Licensor’s prior written consent (to prevent misleading comparisons and unsafe disclosure).
+F) Use the Software to develop or improve a directly competing “proof-carrying agent” or “agent receipts /
+   attestation runtime” product or service without a separate commercial license (Evaluation for purchase
+   decisions is allowed; productizing a competitor is not).
+
+4) CONTRIBUTIONS (OPTIONAL)
+If you submit a pull request, patch, or contribution to the Licensor, you grant the Licensor a perpetual,
+worldwide, royalty-free, irrevocable license to use, modify, distribute, sublicense, and relicense that
+contribution as part of the Software, under any terms the Licensor chooses.
+
+5) OWNERSHIP; NO PATENT LICENSE
+The Software is licensed, not sold. Licensor retains all right, title, and interest.
+No patent rights are granted under this License. No trademark rights are granted.
+
+6) TERMINATION
+This License terminates automatically upon any breach. Upon termination, you must cease all Use and destroy
+all copies of the Software and derivatives in your possession or control, except copies required to be kept
+by law (which must remain unused).
+
+7) DISCLAIMER OF WARRANTY
+THE SOFTWARE IS PROVIDED “AS IS” AND “AS AVAILABLE,” WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+INCLUDING BUT NOT LIMITED TO MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE, AND NON-INFRINGEMENT.
+YOU ASSUME ALL RISK ARISING FROM USE OF THE SOFTWARE.
+
+8) LIMITATION OF LIABILITY
+TO THE MAXIMUM EXTENT PERMITTED BY LAW, IN NO EVENT WILL THE LICENSOR BE LIABLE FOR ANY INDIRECT, INCIDENTAL,
+SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, OR ANY LOSS OF PROFITS, REVENUE, DATA, OR BUSINESS INTERRUPTION,
+ARISING OUT OF OR RELATED TO THIS LICENSE OR THE SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+LICENSOR’S TOTAL LIABILITY FOR ANY CLAIM WILL NOT EXCEED USD $100.
+
+9) EXPORT / COMPLIANCE
+You are responsible for complying with all applicable laws and regulations, including export controls and
+sanctions laws, if applicable.
+
+10) COMMERCIAL LICENSE
+Any Production or Commercial Use requires a separate written commercial license from the Licensor.
+See COMMERCIAL.md for the intended contact path and commercial-use triggers.

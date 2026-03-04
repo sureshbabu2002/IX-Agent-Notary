@@ -1,0 +1,24 @@
+{
+  "policy_id": "policy:demo-allowlist",
+  "default_effect": "deny",
+  "rules": [
+    {
+      "rule_id": "deny-dotenv",
+      "effect": "deny",
+      "kind": "tool.invoke",
+      "tool": "filesystem",
+      "operation": "file.write",
+      "path_exact": ".env",
+      "explanation": "Never allow writes to .env (demo safety)."
+    },
+    {
+      "rule_id": "fs-write-docs-only",
+      "effect": "allow",
+      "kind": "tool.invoke",
+      "tool": "filesystem",
+      "operation": "file.write",
+      "path_prefix": "docs/",
+      "explanation": "Allow writes limited to docs/* (demo safety)."
+    }
+  ]
+}

@@ -1,0 +1,202 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/ix-agent-notary/receipt.schema.json",
+  "title": "IX-Agent-Notary Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_version",
+    "receipt_id",
+    "time",
+    "trace",
+    "actor",
+    "notary",
+    "action",
+    "policy",
+    "result",
+    "integrity"
+  ],
+  "properties": {
+    "receipt_version": { "type": "string", "minLength": 1 },
+    "receipt_id": { "type": "string", "minLength": 8 },
+
+    "time": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["requested_at", "decided_at", "completed_at"],
+      "properties": {
+        "requested_at": { "type": "string", "minLength": 10 },
+        "decided_at": { "type": "string", "minLength": 10 },
+        "completed_at": { "type": "string", "minLength": 10 }
+      }
+    },
+
+    "trace": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["trace_id", "step"],
+      "properties": {
+        "trace_id": { "type": "string", "minLength": 8 },
+        "step": { "type": "integer", "minimum": 1 },
+        "parent_receipt_id": { "type": "string", "minLength": 8 }
+      }
+    },
+
+    "actor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "id"],
+      "properties": {
+        "type": { "type": "string", "minLength": 1 },
+        "id": { "type": "string", "minLength": 1 },
+        "display": { "type": "string" },
+        "session_id": { "type": "string" }
+      }
+    },
+
+    "notary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["runtime", "version", "instance_id"],
+      "properties": {
+        "runtime": { "type": "string", "minLength": 1 },
+        "version": { "type": "string", "minLength": 1 },
+        "instance_id": { "type": "string", "minLength": 1 },
+        "environment": { "type": "string" }
+      }
+    },
+
+    "action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "tool", "operation", "parameters", "parameters_hash"],
+      "properties": {
+        "kind": { "type": "string", "minLength": 1 },
+        "tool": { "type": "string", "minLength": 1 },
+        "operation": { "type": "string", "minLength": 1 },
+        "parameters": { "type": "object" },
+        "parameters_hash": { "type": "string", "minLength": 8 },
+        "input_artifacts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["type", "hash", "hash_alg"],
+            "properties": {
+              "type": { "type": "string" },
+              "uri": { "type": "string" },
+              "hash": { "type": "string" },
+              "hash_alg": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["policy_id", "decision", "reason", "rules", "approvals"],
+      "properties": {
+        "policy_id": { "type": "string", "minLength": 1 },
+        "decision": { "type": "string", "enum": ["allow", "deny"] },
+        "reason": { "type": "string", "minLength": 1 },
+        "rules": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["rule_id", "effect", "explanation"],
+            "properties": {
+              "rule_id": { "type": "string", "minLength": 1 },
+              "effect": { "type": "string", "enum": ["allow", "deny"] },
+              "explanation": { "type": "string", "minLength": 1 }
+            }
+          }
+        },
+        "approvals": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["approver_type", "approver_id", "approved_at", "scope"],
+            "properties": {
+              "approver_type": { "type": "string", "enum": ["user", "service"] },
+              "approver_id": { "type": "string", "minLength": 1 },
+              "approved_at": { "type": "string", "minLength": 10 },
+              "scope": { "type": "string", "minLength": 1 }
+            }
+          }
+        },
+        "context_hashes": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        }
+      }
+    },
+
+    "result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "summary", "output", "output_hash"],
+      "properties": {
+        "status": { "type": "string", "enum": ["success", "failure", "denied"] },
+        "summary": { "type": "string", "minLength": 1 },
+        "output": { "type": "object" },
+        "output_hash": { "type": "string", "minLength": 8 },
+        "artifacts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["type", "hash", "hash_alg"],
+            "properties": {
+              "type": { "type": "string" },
+              "uri": { "type": "string" },
+              "hash": { "type": "string" },
+              "hash_alg": { "type": "string" }
+            }
+          }
+        },
+        "error": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+
+    "integrity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["canonicalization", "hash", "signature"],
+      "properties": {
+        "canonicalization": { "type": "string", "enum": ["RFC8785-JCS"] },
+        "hash": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["alg", "encoding"],
+          "properties": {
+            "alg": { "type": "string", "minLength": 1 },
+            "encoding": { "type": "string", "enum": ["hex", "base64url"] }
+          }
+        },
+        "signature": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["alg", "key_id", "value"],
+          "properties": {
+            "alg": { "type": "string", "minLength": 1 },
+            "key_id": { "type": "string", "minLength": 1 },
+            "value": { "type": "string", "minLength": 8 }
+          }
+        },
+        "public_key": { "type": "string" }
+      }
+    },
+
+    "redaction": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  }
+}

@@ -7,6 +7,10 @@ This folder contains **policy packs** for the PolicyGate evaluator.
   - Allows writes only under `docs/`
   - Default effect: **deny**
 
-This is not meant to be a full policy language yet—just a credible v0 that proves:
-1) deterministic allow/deny decisions
-2) a machine-verifiable receipt contains the policy decision + matched rule evidence
+## Policy pack integrity (policy_hash)
+When a receipt is emitted through PolicyGate, it can include:
+
+- `policy.policy_hash` — a stable content hash of the policy pack (RFC8785 canonical JSON → sha-256 → base64url)
+- `policy.policy_source` — where the policy was loaded from (file path in this demo)
+
+This lets a verifier prove the decision came from a **specific policy version**, not just a policy ID string.

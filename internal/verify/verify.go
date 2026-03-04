@@ -17,6 +17,9 @@ type Options struct {
 	StrictHashes     bool
 	StrictSignature  bool
 	PublicKeyPathOpt string
+
+	StrictChain bool
+	ChainDir    string // if empty and StrictChain=true, defaults to directory containing ReceiptPath
 }
 
 type Result struct {
@@ -24,6 +27,7 @@ type Result struct {
 	SchemaPath  string
 	Hashes      receipt.HashCheck
 	Signature   receipt.SignatureCheck
+	Chain       receipt.ChainCheck
 }
 
 func Run(opts Options) (*Result, error) {
@@ -32,6 +36,12 @@ func Run(opts Options) (*Result, error) {
 	}
 	if opts.SchemaPath == "" {
 		opts.SchemaPath = filepath.Join("spec", "receipt.schema.json")
+	}
+
+	// If we're doing strict chain validation, leaf must be strict too.
+	if opts.StrictChain {
+		opts.StrictHashes = true
+		opts.StrictSignature = true
 	}
 
 	schema, err := compileSchema(opts.SchemaPath)
@@ -61,11 +71,45 @@ func Run(opts Options) (*Result, error) {
 		return nil, err
 	}
 
+	cc := receipt.ChainCheck{Skipped: true}
+
+	if opts.StrictChain {
+		dir := opts.ChainDir
+		if dir == "" {
+			dir = filepath.Dir(opts.ReceiptPath)
+		}
+		resolver, err := receipt.NewDirResolver(dir)
+		if err != nil {
+			return nil, err
+		}
+
+		// Validate each parent strictly: schema + hashes + signature.
+		validateParent := func(pr receipt.Receipt) error {
+			if err := schema.Validate(any(pr)); err != nil {
+				return fmt.Errorf("schema validation failed: %w", err)
+			}
+			if _, err := receipt.ValidateCoreHashes(pr, receipt.HashValidationOptions{Strict: true}); err != nil {
+				return err
+			}
+			if _, err := receipt.ValidateSignature(pr, receipt.SignatureValidationOptions{Strict: true, PublicKeyPath: opts.PublicKeyPathOpt}); err != nil {
+				return err
+			}
+			return nil
+		}
+
+		c, err := receipt.ValidateChain(r, resolver, validateParent, receipt.ChainValidationOptions{Strict: true})
+		if err != nil {
+			return nil, err
+		}
+		cc = *c
+	}
+
 	return &Result{
 		ReceiptPath: opts.ReceiptPath,
 		SchemaPath:  opts.SchemaPath,
 		Hashes:      *hc,
 		Signature:   *sc,
+		Chain:       cc,
 	}, nil
 }
 

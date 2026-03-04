@@ -40,6 +40,8 @@ func verifyCmd(args []string) {
 	strictHashes := fs.Bool("strict-hashes", false, "fail if parameters_hash/output_hash are placeholders or missing")
 	strictSig := fs.Bool("strict-signature", false, "fail if signature is missing/placeholder or public key can't be resolved")
 	pubKeyPath := fs.String("pubkey", "", "optional path to an ed25519 public key (base64url). Overrides key lookup by key_id.")
+	strictChain := fs.Bool("strict-chain", false, "verify parent_receipt_id chain (loads parent receipts from --chain-dir or receipt directory). Implies strict hashes+signature for the leaf.")
+	chainDir := fs.String("chain-dir", "", "directory to search for parent receipts (default: directory containing the receipt)")
 
 	if err := fs.Parse(args); err != nil {
 		os.Exit(2)
@@ -49,7 +51,7 @@ func verifyCmd(args []string) {
 		fmt.Fprintln(os.Stderr, "verify requires exactly 1 argument: <receipt.json>")
 		fmt.Fprintln(os.Stderr)
 		fmt.Fprintln(os.Stderr, "Example:")
-		fmt.Fprintln(os.Stderr, "  ix-an verify examples/receipts/minimal.receipt.json --strict-hashes --strict-signature")
+		fmt.Fprintln(os.Stderr, "  ix-an verify examples/receipts/denied.receipt.json --strict-chain")
 		os.Exit(2)
 	}
 
@@ -61,6 +63,8 @@ func verifyCmd(args []string) {
 		StrictHashes:     *strictHashes,
 		StrictSignature:  *strictSig,
 		PublicKeyPathOpt: *pubKeyPath,
+		StrictChain:      *strictChain,
+		ChainDir:         *chainDir,
 	})
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "FAIL: %v\n", err)
@@ -79,6 +83,12 @@ func verifyCmd(args []string) {
 		notes = append(notes, "signature skipped")
 	} else {
 		notes = append(notes, "signature ok")
+	}
+
+	if res.Chain.Skipped {
+		notes = append(notes, "chain skipped")
+	} else {
+		notes = append(notes, fmt.Sprintf("chain ok (depth=%d)", res.Chain.Depth))
 	}
 
 	fmt.Printf("OK: %s\n", joinNotes(notes))
@@ -149,18 +159,18 @@ func simulateCmd(args []string) {
 	}
 
 	if err := simulate.Run(simulate.Options{
-		PolicyPath: *policyPath,
-		OutPath:    *outPath,
-		Kind:       *kind,
-		Tool:       *tool,
-		Operation:  *operation,
-		Path:       *path,
-		Bytes:      *bytes,
-		ActorID:    *actorID,
-		SessionID:  *sessionID,
-		NotaryInst: *notaryInst,
-		SignKeyPath:*keyPath,
-		SignKeyID:  *keyID,
+		PolicyPath:  *policyPath,
+		OutPath:     *outPath,
+		Kind:        *kind,
+		Tool:        *tool,
+		Operation:   *operation,
+		Path:        *path,
+		Bytes:       *bytes,
+		ActorID:     *actorID,
+		SessionID:   *sessionID,
+		NotaryInst:  *notaryInst,
+		SignKeyPath: *keyPath,
+		SignKeyID:   *keyID,
 	}); err != nil {
 		fmt.Fprintf(os.Stderr, "FAIL: %v\n", err)
 		os.Exit(1)
@@ -176,7 +186,7 @@ func usage() {
 	fmt.Fprintln(os.Stderr, "  ix-an <command> [options]")
 	fmt.Fprintln(os.Stderr)
 	fmt.Fprintln(os.Stderr, "Commands:")
-	fmt.Fprintln(os.Stderr, "  verify     Validate a receipt (schema + hashes + signature)")
+	fmt.Fprintln(os.Stderr, "  verify     Validate a receipt (schema + hashes + signature + optional chain)")
 	fmt.Fprintln(os.Stderr, "  sign       Compute hashes + sign a receipt (ed25519)")
 	fmt.Fprintln(os.Stderr, "  simulate   Simulate a tool action through PolicyGate and emit a signed receipt")
 	fmt.Fprintln(os.Stderr, "  help       Show this help")

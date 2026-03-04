@@ -1,13 +1,13 @@
 {
   "receipt_version": "0.1.0",
-  "receipt_id": "b8b1c7a8-6d91-4b35-8b2f-4a4b4a7a0001",
+  "receipt_id": "ba49f6a5-bed6-4d8e-887b-d49f52d415df",
   "time": {
     "requested_at": "2026-03-02T00:00:00Z",
-    "decided_at": "2026-03-02T00:00:01Z",
-    "completed_at": "2026-03-02T00:00:02Z"
+    "decided_at": "2026-03-02T00:00:00Z",
+    "completed_at": "2026-03-02T00:00:00Z"
   },
   "trace": {
-    "trace_id": "a55d9f3a-7b59-4c7b-8c8c-0f9a00000001",
+    "trace_id": "5591c3dc-45c7-44ae-bcc5-08196421fb1a",
     "step": 1
   },
   "actor": {
@@ -28,33 +28,38 @@
     "operation": "file.write",
     "parameters": {
       "path": "docs/demo.txt",
-      "bytes": 27,
+      "bytes": 10,
       "content_redacted": true
     },
-    "parameters_hash": "sha256:vHxsBrG-E96itQMiOPvPNsNslAZpZO6N-xibOuhA8Oo"
+    "parameters_hash": "sha256:nzBG_2AYdPA-B9OAnOnol_ZeApZW_E1SV5IS0R01c00"
   },
   "policy": {
-    "policy_id": "policy:default-allowlist",
+    "policy_id": "demo-policy-001",
     "decision": "allow",
-    "reason": "Filesystem write allowed under docs/ allowlist.",
+    "reason": "path allowed (docs/*)",
     "rules": [
       {
-        "rule_id": "fs-write-docs-only",
+        "rule_id": "allow-docs",
         "effect": "allow",
-        "explanation": "Writes limited to docs/* for demo safety."
+        "explanation": "allow docs/* writes"
       }
     ],
-    "approvals": []
+    "approvals": [],
+    "context_hashes": {
+      "requested_path": "sha256:zYspRruU8A5aZvUZyO9jfJgIDgPpAI6mSu0xJtQM-Zc"
+    },
+    "policy_hash": "sha256:i7EP3ZB8oVqP2XUXS7P_ywlTpvKzvO1EXkQk2N4C2EE",
+    "policy_source": "policy/demo.policy.json"
   },
   "result": {
     "status": "success",
-    "summary": "Wrote docs/demo.txt (content redacted).",
+    "summary": "Allowed filesystem file.write (simulated).",
     "output": {
       "path": "docs/demo.txt",
       "written": true,
       "content_redacted": true
     },
-    "output_hash": "sha256:fyXuIcFSLV7dOIocg8yHPa1UF7CeEseGpC-psAvIHM0"
+    "output_hash": "sha256:LWqXYheR0f8y7lE4A4qT11yuhC7iT0Dda2WB-4O7rYo"
   },
   "integrity": {
     "canonicalization": "RFC8785-JCS",
@@ -65,7 +70,7 @@
     "signature": {
       "alg": "ed25519",
       "key_id": "dev-key-001",
-      "value": "rbILdHHGofSMhvPP5HhrrswyxHJNBwzK1lz5RAv4uSsAXfy_UkOR83Fmd-9Jj8riLI7QfOqzen31BEHRFq3gBw"
+      "value": "uzSJ5PdyY1J-OT4gaxV7w3bdffkzLQm6f0bnu-_4-N_KhVaeQpZ2HxlxwWkPDlKZ7WXL3m90LZ1NvNaN-C0oDw"
     }
   }
 }

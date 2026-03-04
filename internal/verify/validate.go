@@ -9,10 +9,10 @@ import (
 )
 
 type ReceiptValidationOptions struct {
-	StrictHashes     bool
-	StrictSignature  bool
-	StrictApprovals  bool
-	PublicKeyPath    string
+	StrictHashes    bool
+	StrictSignature bool
+	StrictApprovals bool
+	PublicKeyPath   string
 }
 
 // CompileSchema compiles the receipt JSON Schema once for reuse.
@@ -49,7 +49,7 @@ func ValidateReceiptObject(
 	}
 
 	ac, err := receipt.ValidateApprovalSignatures(r, receipt.ApprovalSigValidationOptions{
-		Strict:       opts.StrictApprovals,
+		Strict:        opts.StrictApprovals,
 		PublicKeyPath: opts.PublicKeyPath,
 	})
 	if err != nil {

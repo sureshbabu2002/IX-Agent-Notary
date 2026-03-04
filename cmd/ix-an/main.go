@@ -123,12 +123,12 @@ func verifyDirCmd(args []string) {
 	dir := fs.Arg(0)
 
 	res, err := verify.VerifyDir(verify.DirOptions{
-		Dir:              dir,
-		SchemaPath:       *schemaPath,
-		PublicKeyPath:    *pubKeyPath,
-		StrictHashes:     true,
-		StrictSignature:  true,
-		StrictChain:      *strictChain,
+		Dir:             dir,
+		SchemaPath:      *schemaPath,
+		PublicKeyPath:   *pubKeyPath,
+		StrictHashes:    true,
+		StrictSignature: true,
+		StrictChain:     *strictChain,
 	})
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "FAIL: %v\n", err)
@@ -192,6 +192,10 @@ func simulateCmd(args []string) {
 	keyPath := fs.String("key", "keys/dev/dev-key-001.seed", "ed25519 seed key path (default: keys/dev/dev-key-001.seed)")
 	keyID := fs.String("key-id", "dev-key-001", "signature key_id to use (default: dev-key-001)")
 
+	approve := fs.Bool("approve", false, "embed a single approval record in policy.approvals[] (demo governance evidence)")
+	approver := fs.String("approver", "user:approver-demo", "approver id used when --approve is set")
+	approvalType := fs.String("approval-type", "human", "approval type used when --approve is set: human|ticket|breakglass")
+
 	if err := fs.Parse(args); err != nil {
 		os.Exit(2)
 	}
@@ -202,22 +206,26 @@ func simulateCmd(args []string) {
 		fmt.Fprintln(os.Stderr, "Examples:")
 		fmt.Fprintln(os.Stderr, "  ix-an simulate --path docs/demo.txt --out /tmp/allow.receipt.json")
 		fmt.Fprintln(os.Stderr, "  ix-an simulate --path .env        --out /tmp/deny.receipt.json")
+		fmt.Fprintln(os.Stderr, "  ix-an simulate --path docs/demo.txt --out /tmp/approved.receipt.json --approve --approver you@example.com --approval-type ticket")
 		os.Exit(2)
 	}
 
 	if err := simulate.Run(simulate.Options{
-		PolicyPath:  *policyPath,
-		OutPath:     *outPath,
-		Kind:        *kind,
-		Tool:        *tool,
-		Operation:   *operation,
-		Path:        *path,
-		Bytes:       *bytes,
-		ActorID:     *actorID,
-		SessionID:   *sessionID,
-		NotaryInst:  *notaryInst,
-		SignKeyPath: *keyPath,
-		SignKeyID:   *keyID,
+		PolicyPath:       *policyPath,
+		OutPath:          *outPath,
+		Kind:             *kind,
+		Tool:             *tool,
+		Operation:        *operation,
+		Path:             *path,
+		Bytes:            *bytes,
+		ActorID:          *actorID,
+		SessionID:        *sessionID,
+		NotaryInst:       *notaryInst,
+		SignKeyPath:      *keyPath,
+		SignKeyID:        *keyID,
+		IncludeApproval:  *approve,
+		ApproverID:       *approver,
+		ApprovalType:     *approvalType,
 	}); err != nil {
 		fmt.Fprintf(os.Stderr, "FAIL: %v\n", err)
 		os.Exit(1)
@@ -266,11 +274,11 @@ func storeAppendCmd(args []string) {
 
 	// Strictly verify before ingest.
 	if _, err := verify.Run(verify.Options{
-		ReceiptPath:     *inPath,
-		SchemaPath:      *schemaPath,
-		StrictHashes:    true,
-		StrictSignature: true,
-		PublicKeyPathOpt:*pubKeyPath,
+		ReceiptPath:      *inPath,
+		SchemaPath:       *schemaPath,
+		StrictHashes:     true,
+		StrictSignature:  true,
+		PublicKeyPathOpt: *pubKeyPath,
 	}); err != nil {
 		fmt.Fprintf(os.Stderr, "FAIL: receipt did not verify strictly; not ingesting: %v\n", err)
 		os.Exit(1)

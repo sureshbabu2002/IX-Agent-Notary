@@ -19,11 +19,16 @@ type MatchedRule struct {
 }
 
 type Decision struct {
-	PolicyID  string
-	Decision  string // "allow" or "deny"
-	Reason    string
-	Matched   []MatchedRule
-	ContextKV map[string]string // optional: raw context strings for hashing upstream
+	PolicyID     string
+	PolicyHash   string
+	PolicySource string
+
+	Decision string // "allow" or "deny"
+	Reason   string
+	Matched  []MatchedRule
+
+	// optional: raw context strings for hashing upstream
+	ContextKV map[string]string
 }
 
 func (p *Policy) Evaluate(req Request) Decision {
@@ -44,7 +49,10 @@ func (p *Policy) Evaluate(req Request) Decision {
 		}
 
 		return Decision{
-			PolicyID: p.PolicyID,
+			PolicyID:     p.PolicyID,
+			PolicyHash:   p.PolicyHash,
+			PolicySource: p.SourcePath,
+
 			Decision: eff,
 			Reason:   reason,
 			Matched: []MatchedRule{
@@ -58,7 +66,10 @@ func (p *Policy) Evaluate(req Request) Decision {
 
 	// No matches -> default
 	return Decision{
-		PolicyID: p.PolicyID,
+		PolicyID:     p.PolicyID,
+		PolicyHash:   p.PolicyHash,
+		PolicySource: p.SourcePath,
+
 		Decision: p.DefaultEffect,
 		Reason:   fmt.Sprintf("No rule matched; default_effect=%s.", p.DefaultEffect),
 		Matched:  []MatchedRule{},

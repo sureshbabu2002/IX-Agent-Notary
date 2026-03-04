@@ -93,6 +93,23 @@ func Run(opts Options) error {
 		return err
 	}
 
+	// If approvals are present, sign them (demo uses same key as receipt signing).
+	if opts.IncludeApproval {
+		pol, _ := r["policy"].(map[string]any)
+		if pol != nil {
+			apprs, _ := pol["approvals"].([]any)
+			for i := range apprs {
+				obj, ok := apprs[i].(map[string]any)
+				if !ok || obj == nil {
+					continue
+				}
+				if err := sign.SignApprovalInPlace(obj, opts.SignKeyPath, opts.SignKeyID); err != nil {
+					return fmt.Errorf("sign approval: %w", err)
+				}
+			}
+		}
+	}
+
 	// Sign and write (computes core hashes too).
 	if err := sign.SignReceiptInPlace(r, opts.SignKeyPath, opts.SignKeyID); err != nil {
 		return err

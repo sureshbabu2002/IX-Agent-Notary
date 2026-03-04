@@ -1,69 +1,86 @@
-That script creates:
+# Key Management (v0)
 
-keys/dev/dev-key-001.seed (0600, gitignored)
+Receipts are only as trustworthy as the signing keys behind them.
 
-keys/dev/dev-key-001.pub (gitignored)
+This repo intentionally **does not** ship any private signing material. Private keys must never be committed to a public repository.
 
-example receipts under examples/receipts/ (gitignored)
+---
 
-What a real deployment should do
+## Local evaluation (no secrets committed)
+
+Generate a local dev keypair and example receipts (all **gitignored**):
+
+```bash
+bash scripts/gen_demo_assets.sh
+This creates:
+
+keys/dev/dev-key-001.seed — private ed25519 seed (0600, gitignored)
+
+keys/dev/dev-key-001.pub — public key (gitignored)
+
+examples/receipts/*.json — generated receipts (gitignored)
+
+Then verify strictly:
+go run ./cmd/ix-an verify-dir examples/receipts --strict-approvals
+
+If you prefer manual steps:
+go run ./cmd/ix-an keygen --out-seed keys/dev/dev-key-001.seed --out-pub keys/dev/dev-key-001.pub
+go run ./cmd/ix-an simulate --path docs/demo.txt --out /tmp/allow.json --key keys/dev/dev-key-001.seed --key-id dev-key-001
+go run ./cmd/ix-an verify /tmp/allow.json --strict-hashes --strict-signature
+
+Production guidance (baseline posture)
 1) Store signing keys in KMS/HSM
 
-Keep ed25519 private key material in a hardware-backed store when possible
+Keep private key material hardware-backed when possible (HSM / KMS / Vault with HSM-backed keys).
 
-Limit use to “sign receipt” operations only
+Limit permissions to “sign receipt” operations only.
 
-Require IAM authorization and (optionally) approvals for signing in high-risk environments
+Gate signing behind IAM authorization and change control in high-risk environments.
 
-2) Rotate keys (and keep receipts verifiable forever)
+2) Publish a trusted public-key allowlist
 
-Receipts reference:
+Verification should only accept signatures from:
+
+a curated set of trusted public keys,
+
+mapped to known key_id values,
+
+with an explicit revocation story (even if “manual list update” in v0).
+
+3) Rotate keys without breaking verification
+
+Receipts include:
 
 integrity.signature.key_id
 
-A practical approach:
+Recommended pattern:
 
-Keep key_id immutable for a key version (e.g. notary-prod-2026-03)
+treat key_id as immutable for a specific key version (e.g., notary-prod-2026-03)
 
-Rotate by issuing a new key_id
+rotate by issuing a new key and a new key_id
 
-Publish public keys for historical key_ids so old receipts remain verifiable
+keep historical public keys available so old receipts remain verifiable
 
-3) Treat public keys as an allowlist
+4) Separate domains (optional, but stronger)
 
-Your SOC/CI should verify signatures only against:
+For higher assurance:
 
-a trusted set of public keys
+use a distinct key for the notary’s receipt signing
 
-with known key_ids
-
-and (optionally) a revocation list
-
-4) Make verifier posture explicit (strict by default in CI)
-
-Always run:
-
-strict core hashes
-
-strict signature verification
-
-strict approvals (if you require approvals)
-
-strict chain verification (when parent linkage exists)
+and separate keys for human/ticket approvals (different trust domain)
 
 Threats this mitigates
 
-Receipt tampering (invalid signature)
+Receipt tampering (signature fails)
 
-Receipt fabrication (unknown key_id / unknown public key)
+Receipt fabrication (unknown key_id / untrusted public key)
 
 “audit theater” placeholders (strict verifier rejects)
 
-Silent policy drift (use policy_hash when enabled)
+Silent evidence drift (hash + signature binds the canonical receipt payload)
 
 See also:
 
 docs/THREAT_MODEL.md
 
 docs/POLICY_INTEGRITY.md
-

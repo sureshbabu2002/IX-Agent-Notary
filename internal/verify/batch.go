@@ -11,13 +11,13 @@ import (
 )
 
 type DirOptions struct {
-	Dir              string
-	SchemaPath       string
-	PublicKeyPath    string
-	StrictHashes     bool
-	StrictSignature  bool
-	StrictApprovals  bool
-	StrictChain      bool
+	Dir             string
+	SchemaPath      string
+	PublicKeyPath   string
+	StrictHashes    bool
+	StrictSignature bool
+	StrictApprovals bool
+	StrictChain     bool
 }
 
 type DirResult struct {

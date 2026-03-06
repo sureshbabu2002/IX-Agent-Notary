@@ -219,6 +219,9 @@ func simulateCmd(args []string) {
 	notaryInst := fs.String("notary", "notary-local-001", "notary instance id (default: notary-local-001)")
 	keyPath := fs.String("key", "keys/dev/dev-key-001.seed", "ed25519 seed key path (default: keys/dev/dev-key-001.seed)")
 	keyID := fs.String("key-id", "dev-key-001", "signature key_id to use (default: dev-key-001)")
+	traceID := fs.String("trace-id", "", "optional trace.trace_id override; required when --parent-receipt-id is set")
+	step := fs.Int("step", 1, "trace step number (default: 1)")
+	parentReceiptID := fs.String("parent-receipt-id", "", "optional parent receipt_id for chained receipts")
 
 	approve := fs.Bool("approve", false, "embed a single approval record in policy.approvals[] (demo governance evidence)")
 	approver := fs.String("approver", "user:approver-demo", "approver id used when --approve is set")
@@ -235,6 +238,7 @@ func simulateCmd(args []string) {
 		fmt.Fprintln(os.Stderr, "  ix-an simulate --path docs/demo.txt --out /tmp/allow.receipt.json")
 		fmt.Fprintln(os.Stderr, "  ix-an simulate --path .env        --out /tmp/deny.receipt.json")
 		fmt.Fprintln(os.Stderr, "  ix-an simulate --path docs/demo.txt --out /tmp/approved.receipt.json --approve --approver you@example.com --approval-type ticket")
+		fmt.Fprintln(os.Stderr, "  ix-an simulate --path docs/child.txt --out /tmp/child.receipt.json --trace-id <trace-id> --step 2 --parent-receipt-id <receipt-id>")
 		os.Exit(2)
 	}
 
@@ -251,6 +255,9 @@ func simulateCmd(args []string) {
 		NotaryInst:      *notaryInst,
 		SignKeyPath:     *keyPath,
 		SignKeyID:       *keyID,
+		TraceID:         *traceID,
+		Step:            *step,
+		ParentReceiptID: *parentReceiptID,
 		IncludeApproval: *approve,
 		ApproverID:      *approver,
 		ApprovalType:    *approvalType,

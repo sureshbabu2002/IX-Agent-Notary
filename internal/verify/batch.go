@@ -14,6 +14,7 @@ type DirOptions struct {
 	Dir             string
 	SchemaPath      string
 	PublicKeyPath   string
+	PublicKeyDir    string
 	StrictHashes    bool
 	StrictSignature bool
 	StrictApprovals bool
@@ -37,7 +38,6 @@ func VerifyDir(opts DirOptions) (*DirResult, error) {
 		opts.SchemaPath = filepath.Join("spec", "receipt.schema.json")
 	}
 
-	// For “enterprise serious” posture, chain implies strict leaf validation.
 	if opts.StrictChain {
 		opts.StrictHashes = true
 		opts.StrictSignature = true
@@ -48,13 +48,11 @@ func VerifyDir(opts DirOptions) (*DirResult, error) {
 		return nil, err
 	}
 
-	// Build resolver once (used for chain checks).
 	resolver, err := receipt.NewDirResolver(dir)
 	if err != nil {
 		return nil, err
 	}
 
-	// Collect JSON files deterministically.
 	var files []string
 	walkErr := filepath.WalkDir(dir, func(path string, d fs.DirEntry, werr error) error {
 		if werr != nil {
@@ -81,17 +79,18 @@ func VerifyDir(opts DirOptions) (*DirResult, error) {
 			StrictSignature: opts.StrictSignature,
 			StrictApprovals: opts.StrictApprovals,
 			PublicKeyPath:   opts.PublicKeyPath,
+			PublicKeyDir:    opts.PublicKeyDir,
 		})
 		return err
 	}
 
-	// Parent validator is always strict when StrictChain is on (and includes approvals if requested).
 	validateParentStrict := func(r receipt.Receipt) error {
 		_, _, _, err := ValidateReceiptObject(r, schema, ReceiptValidationOptions{
 			StrictHashes:    true,
 			StrictSignature: true,
 			StrictApprovals: opts.StrictApprovals,
 			PublicKeyPath:   opts.PublicKeyPath,
+			PublicKeyDir:    opts.PublicKeyDir,
 		})
 		return err
 	}

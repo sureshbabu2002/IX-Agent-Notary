@@ -24,8 +24,8 @@ func TestGeneratedReceipts_StrictSignaturesPass(t *testing.T) {
 			r := writeSignedTestReceipt(t, path, tc.targetPath, seedPath, receiptTestKeyID)
 
 			if _, err := ValidateSignature(r, SignatureValidationOptions{
-				Strict:        true,
-				PublicKeyPath: pubPath,
+				Strict:       true,
+				PublicKeyDir: filepath.Dir(pubPath),
 			}); err != nil {
 				t.Fatalf("ValidateSignature (strict): %v", err)
 			}

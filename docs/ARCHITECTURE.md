@@ -1,37 +1,61 @@
-# IX-Agent-Notary — Architecture
+# IX-Agent-Notary Architecture
 
 ## Problem statement
-When an agent can call tools (code, CI/CD, cloud APIs, ticketing, secrets, production ops), the enterprise question is:
 
-**What exactly did the agent do, under what policy, with what approvals — and can we prove it?**
+When an agent can call tools such as code hosts, CI/CD, cloud APIs, ticketing systems, secrets managers, or production operations, the real enterprise question is:
 
-IX-Agent-Notary exists to make **policy enforcement + verifiable evidence** first-class.
+**What exactly did the agent do, under what policy, with what approvals, and can we prove it?**
 
----
+IX-Agent-Notary exists to make **policy enforcement plus verifiable evidence** a first-class part of agent/tool execution.
 
 ## Design goals
-1. **Tamper-evident receipts** for every meaningful action (inputs, policy decision, outputs, timing, identity).
-2. **Strict verification** so consumers can reject placeholders or unverifiable evidence.
-3. **Small trusted boundary**: keep the enforcement + receipt/signing core reviewable.
-4. **Composable storage**: directory store or append-only JSONL log patterns.
 
----
+1. **Tamper-evident receipts** for every meaningful action
+2. **Strict verification** so placeholders or unverifiable evidence can be rejected
+3. **Small trusted boundary** so the core is reviewable
+4. **Composable storage** so receipts can live in a directory or append-only log
+5. **Chainable evidence** so multi-step workflows can be followed across receipts
 
-## Components
-- **PolicyGate (enforcement)**  
-  Evaluates a policy pack and returns allow/deny with structured evidence and reason.
-- **Tool mediator / executor**  
-  Executes (or simulates) tool actions through the PolicyGate decision.
-- **Receipt composer + canonicalization**  
-  Builds a receipt and canonicalizes payloads (RFC 8785 / JCS) before hashing/signing.
-- **Signer**  
-  Signs receipts (ed25519 in v0) and writes `integrity.signature`.
-- **Verifier (consumer)**  
-  Validates schema, hashes, signature, optional approvals, and optional chain linkage.
+## Main components
 
----
+### PolicyGate
 
-## Data flow (canonical)
+Evaluates a policy pack and returns:
+
+- allow or deny
+- matched rule evidence
+- reason text
+- policy identity metadata
+
+### Tool mediator or executor
+
+Represents the path through which tool actions are executed or simulated after policy evaluation.
+
+### Receipt composer
+
+Builds the receipt object, including:
+
+- action fields
+- policy evidence
+- result fields
+- trace metadata
+- integrity envelope
+
+### Canonicalizer and signer
+
+Canonicalizes the payload with RFC8785-JCS, computes core hashes, and signs the receipt.
+
+### Verifier
+
+Checks:
+
+- schema validity
+- core hashes
+- receipt signature
+- approval signatures when requested
+- parent linkage and step consistency when strict chain validation is enabled
+
+## Canonical data flow
 
 ```mermaid
 flowchart LR
@@ -40,14 +64,14 @@ flowchart LR
   end
 
   subgraph Notary["IX-Agent-Notary (trusted runtime boundary)"]
-    PG["PolicyGate (allow/deny + reason)"]
-    EX["Tool Mediator/Executor"]
+    PG["PolicyGate"]
+    EX["Tool Mediator / Executor"]
     RC["Receipt Composer"]
     SG["Signer"]
   end
 
-  subgraph External["External Tools / Systems"]
-    T["Tool/API Target"]
+  subgraph External["External Systems"]
+    T["Tool / API Target"]
     ST["Receipt Store (dir / jsonl)"]
     V["Verifier (CLI or service)"]
   end
@@ -60,52 +84,89 @@ flowchart LR
   RC --> SG
   SG -->|"signed receipt"| ST
   ST --> V
+```
 
-Trust boundaries
-Trusted boundary (minimum viable TCB)
+## Trust boundaries
 
-These pieces must be small, reviewable, and hardened:
+### Trusted boundary
 
-policy decision evaluator (PolicyGate)
+These pieces should stay small, reviewable, and hardened:
 
-receipt construction + canonicalization (Receipt Composer)
+- policy evaluator
+- receipt construction
+- canonicalization
+- signing logic
+- verification logic
 
-signing + key handling (Signer)
+### Untrusted or assumed-fallible
 
-verification logic (Verifier)
+Assume these can be wrong, manipulated, or compromised:
 
-Untrusted / assumed-compromisable
+- agent planning or orchestration logic
+- prompts or LLM outputs
+- upstream tool-selection code
+- tool response content
 
-Assume these can be wrong or compromised:
+Principle: assume the agent is fallible. Trust enforcement plus receipts, not the agent’s own story.
 
-agent orchestration logic
+## Receipt chain model
 
-prompts / LLM outputs
+Receipts can form an evidence chain across a workflow.
 
-upstream planner code
+Relevant fields:
 
-tool response content (capture as evidence; don’t trust as truth)
+- `trace.trace_id`
+- `trace.step`
+- optional `trace.parent_receipt_id`
 
-Principle: assume the agent is fallible; rely on enforcement + receipts, not “agent honesty.”
+Strict chain validation currently enforces:
 
-Receipt chain concept
+- parent receipt must exist
+- parent and child must share the same `trace_id`
+- parent `step` must equal child step minus one
+- the root receipt must end at step `1`
+- cycles are rejected
 
-Receipts can form a linked chain (like an evidence log):
+That gives the verifier a way to detect broken or inconsistent parent linkage in multi-step evidence.
 
-each receipt may reference a parent_receipt_id
+## Storage model
 
-workflows share a trace_id
+v0 keeps storage intentionally simple:
 
-receipts include hashes of inputs/outputs and policy context
+- individual JSON receipts in a directory
+- append-only JSONL log pattern
 
-This makes it harder to drop/reorder steps without detection (when chain validation is enabled).
+The store itself is **not** assumed trustworthy. The trust comes from verification.
 
-Key posture
+## Key posture
 
-No private keys are shipped in the repo.
+This repo does not ship private keys.
 
-Local evaluation keys are generated on the evaluator’s machine (scripts/gen_demo_assets.sh).
+For local evaluation:
 
-Production should use KMS/HSM-backed keys and an explicit trusted public-key allowlist.
+- generate a dev keypair locally
+- generate local demo receipts
+- verify them strictly
 
-See docs/KEY_MANAGEMENT.md.
+For production:
+
+- use KMS or HSM backed keys
+- publish a trusted public-key allowlist
+- rotate keys without invalidating old receipts
+
+See `docs/KEY_MANAGEMENT.md`.
+
+## What this architecture is and is not
+
+IX-Agent-Notary is:
+
+- a control-point pattern for agent/tool execution
+- an evidence format plus verification path
+- a narrow trust layer that security teams can reason about
+
+IX-Agent-Notary is not:
+
+- a general-purpose agent framework
+- a full SIEM
+- a guarantee that tool outputs are truthful
+- a replacement for IAM, host hardening, or network controls

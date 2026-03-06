@@ -18,9 +18,10 @@ type Options struct {
 	StrictSignature  bool
 	StrictApprovals  bool
 	PublicKeyPathOpt string
+	PublicKeyDirOpt  string
 
 	StrictChain bool
-	ChainDir    string // if empty and StrictChain=true, defaults to directory containing ReceiptPath
+	ChainDir    string
 }
 
 type Result struct {
@@ -40,7 +41,6 @@ func Run(opts Options) (*Result, error) {
 		opts.SchemaPath = filepath.Join("spec", "receipt.schema.json")
 	}
 
-	// If we're doing strict chain validation, leaf must be strict too.
 	if opts.StrictChain {
 		opts.StrictHashes = true
 		opts.StrictSignature = true
@@ -61,6 +61,7 @@ func Run(opts Options) (*Result, error) {
 		StrictSignature: opts.StrictSignature,
 		StrictApprovals: opts.StrictApprovals,
 		PublicKeyPath:   opts.PublicKeyPathOpt,
+		PublicKeyDir:    opts.PublicKeyDirOpt,
 	})
 	if err != nil {
 		return nil, err
@@ -78,18 +79,18 @@ func Run(opts Options) (*Result, error) {
 			return nil, err
 		}
 
-		// Validate each parent strictly: schema + hashes + signature (+ approvals if requested).
 		validateParent := func(pr receipt.Receipt) error {
 			_, _, _, err := ValidateReceiptObject(pr, schema, ReceiptValidationOptions{
 				StrictHashes:    true,
 				StrictSignature: true,
 				StrictApprovals: opts.StrictApprovals,
 				PublicKeyPath:   opts.PublicKeyPathOpt,
+				PublicKeyDir:    opts.PublicKeyDirOpt,
 			})
 			return err
 		}
 
-		c, err := receipt.ValidateChain(r, resolver, validateParent, receipt.ChainValidationOptions{Strict: true})
+		c, err := receipt.ValidateChain(pr, resolver, validateParent, receipt.ChainValidationOptions{Strict: true})
 		if err != nil {
 			return nil, err
 		}

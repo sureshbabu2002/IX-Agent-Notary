@@ -11,6 +11,7 @@ import (
 
 func TestSimulate_WithApproval_ProducesStrictVerifiableReceipt(t *testing.T) {
 	root := testutil.RepoRoot(t)
+	seedPath, pubPath := testutil.TempEd25519Keypair(t, "test-key-001")
 
 	out := filepath.Join(t.TempDir(), "approved.receipt.json")
 
@@ -25,8 +26,8 @@ func TestSimulate_WithApproval_ProducesStrictVerifiableReceipt(t *testing.T) {
 		ActorID:         "agent:test",
 		SessionID:       "sess-test-001",
 		NotaryInst:      "notary-test-001",
-		SignKeyPath:     filepath.Join(root, "keys", "dev", "dev-key-001.seed"),
-		SignKeyID:       "dev-key-001",
+		SignKeyPath:     seedPath,
+		SignKeyID:       "test-key-001",
 		IncludeApproval: true,
 		ApproverID:      "user:test-approver",
 		ApprovalType:    "human",
@@ -39,10 +40,12 @@ func TestSimulate_WithApproval_ProducesStrictVerifiableReceipt(t *testing.T) {
 	}
 
 	if _, err := verify.Run(verify.Options{
-		ReceiptPath:     out,
-		SchemaPath:      filepath.Join(root, "spec", "receipt.schema.json"),
-		StrictHashes:    true,
-		StrictSignature: true,
+		ReceiptPath:      out,
+		SchemaPath:       filepath.Join(root, "spec", "receipt.schema.json"),
+		StrictHashes:     true,
+		StrictSignature:  true,
+		StrictApprovals:  true,
+		PublicKeyPathOpt: pubPath,
 	}); err != nil {
 		t.Fatalf("verify strict: %v", err)
 	}

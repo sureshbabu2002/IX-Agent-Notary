@@ -90,7 +90,7 @@ func Run(opts Options) (*Result, error) {
 			return err
 		}
 
-		c, err := receipt.ValidateChain(pr, resolver, validateParent, receipt.ChainValidationOptions{Strict: true})
+		c, err := receipt.ValidateChain(r, resolver, validateParent, receipt.ChainValidationOptions{Strict: true})
 		if err != nil {
 			return nil, err
 		}

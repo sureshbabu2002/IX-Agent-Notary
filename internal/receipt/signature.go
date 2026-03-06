@@ -4,6 +4,7 @@ import (
 	"crypto/ed25519"
 	"errors"
 	"fmt"
+	"strings"
 
 	"ix-agent-notary/internal/canon"
 	"ix-agent-notary/internal/crypto"
@@ -11,7 +12,8 @@ import (
 
 type SignatureValidationOptions struct {
 	Strict        bool
-	PublicKeyPath string // optional override for public key lookup (base64url file)
+	PublicKeyPath string // optional exact public key file (base64url)
+	PublicKeyDir  string // optional directory containing <key_id>.pub
 }
 
 type SignatureCheck struct {
@@ -35,6 +37,10 @@ func ValidateSignature(r Receipt, opts SignatureValidationOptions) (*SignatureCh
 	keyID, _ := sigObj["key_id"].(string)
 	val, _ := sigObj["value"].(string)
 
+	alg = strings.ToLower(strings.TrimSpace(alg))
+	keyID = strings.TrimSpace(keyID)
+	val = strings.TrimSpace(val)
+
 	if isPlaceholder(val) {
 		if opts.Strict {
 			return nil, fmt.Errorf("signature is missing/placeholder")
@@ -49,25 +55,16 @@ func ValidateSignature(r Receipt, opts SignatureValidationOptions) (*SignatureCh
 		return nil, fmt.Errorf("missing integrity.signature.key_id")
 	}
 
-	var pub ed25519.PublicKey
-	if opts.PublicKeyPath != "" {
-		p, err := crypto.LoadEd25519PublicKeyFile(opts.PublicKeyPath)
-		if err != nil {
-			if opts.Strict {
-				return nil, err
-			}
-			return &SignatureCheck{Skipped: true, Alg: alg, KeyID: keyID}, nil
+	pub, _, err := crypto.ResolveEd25519PublicKey(crypto.ResolvePublicKeyOptions{
+		KeyID:         keyID,
+		PublicKeyPath: opts.PublicKeyPath,
+		SearchDirs:    receiptPublicKeySearchDirs(opts.PublicKeyDir),
+	})
+	if err != nil {
+		if opts.Strict {
+			return nil, err
 		}
-		pub = p
-	} else {
-		p, _, err := crypto.ResolvePublicKeyByID(keyID)
-		if err != nil {
-			if opts.Strict {
-				return nil, err
-			}
-			return &SignatureCheck{Skipped: true, Alg: alg, KeyID: keyID}, nil
-		}
-		pub = p
+		return &SignatureCheck{Skipped: true, Alg: alg, KeyID: keyID}, nil
 	}
 
 	sigBytes, err := crypto.DecodeBase64URLNoPad(val)
@@ -91,13 +88,11 @@ func ValidateSignature(r Receipt, opts SignatureValidationOptions) (*SignatureCh
 }
 
 func canonicalBytesForSignature(r Receipt) ([]byte, error) {
-	// Deep-clone via JSON round-trip to avoid mutating the original receipt.
 	cloned, err := cloneReceipt(r)
 	if err != nil {
 		return nil, err
 	}
 
-	// Remove signature.value before canonicalization (normative rule in spec).
 	if integrity, ok := cloned["integrity"].(map[string]any); ok {
 		if sigObj, ok := integrity["signature"].(map[string]any); ok {
 			delete(sigObj, "value")
@@ -112,11 +107,17 @@ func canonicalBytesForSignature(r Receipt) ([]byte, error) {
 }
 
 func cloneReceipt(r Receipt) (map[string]any, error) {
-	// Use the fact that Receipt is map[string]any; marshal/unmarshal gives a safe deep clone.
-	// This is acceptable for verification tooling (not a hot path).
 	b, err := marshalJSON(r)
 	if err != nil {
 		return nil, err
 	}
 	return unmarshalJSONObject(b)
+}
+
+func receiptPublicKeySearchDirs(dir string) []string {
+	dir = strings.TrimSpace(dir)
+	if dir == "" {
+		return nil
+	}
+	return []string{dir}
 }

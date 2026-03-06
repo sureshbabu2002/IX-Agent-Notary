@@ -19,7 +19,7 @@ func TestVerifyDir_GeneratedReceipts_StrictChain(t *testing.T) {
 	_, err := VerifyDir(DirOptions{
 		Dir:             dir,
 		SchemaPath:      filepath.Join(root, "spec", "receipt.schema.json"),
-		PublicKeyPath:   pubPath,
+		PublicKeyDir:    filepath.Dir(pubPath),
 		StrictHashes:    true,
 		StrictSignature: true,
 		StrictApprovals: false,

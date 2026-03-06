@@ -7,23 +7,21 @@ import (
 	"ix-agent-notary/internal/testutil"
 )
 
-func TestExamples_StrictHashesPass(t *testing.T) {
-	root := testutil.RepoRoot(t)
+func TestGeneratedReceipts_StrictHashesPass(t *testing.T) {
+	seedPath, _ := testutil.TempEd25519Keypair(t, receiptTestKeyID)
 
 	cases := []struct {
-		name string
-		path string
+		name       string
+		targetPath string
 	}{
-		{"minimal", filepath.Join(root, "examples", "receipts", "minimal.receipt.json")},
-		{"denied", filepath.Join(root, "examples", "receipts", "denied.receipt.json")},
+		{name: "allow", targetPath: "docs/demo.txt"},
+		{name: "deny", targetPath: ".env"},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			r, err := Load(tc.path)
-			if err != nil {
-				t.Fatalf("Load: %v", err)
-			}
+			path := filepath.Join(t.TempDir(), tc.name+".receipt.json")
+			r := writeSignedTestReceipt(t, path, tc.targetPath, seedPath, receiptTestKeyID)
 
 			if _, err := ValidateCoreHashes(r, HashValidationOptions{Strict: true}); err != nil {
 				t.Fatalf("ValidateCoreHashes (strict): %v", err)
@@ -32,13 +30,10 @@ func TestExamples_StrictHashesPass(t *testing.T) {
 	}
 }
 
-func TestExamples_ExpectedComputedHashesMatch(t *testing.T) {
-	root := testutil.RepoRoot(t)
+func TestGeneratedReceipt_ExpectedComputedHashesMatch(t *testing.T) {
+	seedPath, _ := testutil.TempEd25519Keypair(t, receiptTestKeyID)
 
-	r, err := Load(filepath.Join(root, "examples", "receipts", "minimal.receipt.json"))
-	if err != nil {
-		t.Fatalf("Load: %v", err)
-	}
+	r := newSignedTestReceipt(t, "docs/demo.txt", seedPath, receiptTestKeyID)
 
 	h, err := ComputeCoreHashes(r)
 	if err != nil {

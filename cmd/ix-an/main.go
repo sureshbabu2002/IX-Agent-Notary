@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strings"
 
 	"ix-agent-notary/internal/keygen"
 	"ix-agent-notary/internal/receipt"
@@ -53,7 +54,13 @@ func verifyCmd(args []string) {
 	strictChain := fs.Bool("strict-chain", false, "verify parent_receipt_id chain (loads parent receipts from --chain-dir or receipt directory). Implies strict hashes+signature for the leaf.")
 	chainDir := fs.String("chain-dir", "", "directory to search for parent receipts (default: directory containing the receipt)")
 
-	if err := fs.Parse(args); err != nil {
+	normalizedArgs, err := normalizeInterspersedFlags(fs, args)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "verify argument error: %v\n", err)
+		os.Exit(2)
+	}
+
+	if err := fs.Parse(normalizedArgs); err != nil {
 		os.Exit(2)
 	}
 
@@ -61,7 +68,7 @@ func verifyCmd(args []string) {
 		fmt.Fprintln(os.Stderr, "verify requires exactly 1 argument: <receipt.json>")
 		fmt.Fprintln(os.Stderr)
 		fmt.Fprintln(os.Stderr, "Example:")
-		fmt.Fprintln(os.Stderr, "  ix-an verify examples/receipts/denied.receipt.json --strict-chain")
+		fmt.Fprintln(os.Stderr, "  ix-an verify --strict-chain examples/receipts/denied.receipt.json")
 		os.Exit(2)
 	}
 
@@ -122,7 +129,13 @@ func verifyDirCmd(args []string) {
 	strictApprovals := fs.Bool("strict-approvals", false, "fail if any approval is missing a valid signature")
 	strictChain := fs.Bool("strict-chain", true, "verify parent_receipt_id linkage for all receipts found (default: true)")
 
-	if err := fs.Parse(args); err != nil {
+	normalizedArgs, err := normalizeInterspersedFlags(fs, args)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "verify-dir argument error: %v\n", err)
+		os.Exit(2)
+	}
+
+	if err := fs.Parse(normalizedArgs); err != nil {
 		os.Exit(2)
 	}
 
@@ -130,7 +143,7 @@ func verifyDirCmd(args []string) {
 		fmt.Fprintln(os.Stderr, "verify-dir requires exactly 1 argument: <dir>")
 		fmt.Fprintln(os.Stderr)
 		fmt.Fprintln(os.Stderr, "Example:")
-		fmt.Fprintln(os.Stderr, "  ix-an verify-dir examples/receipts")
+		fmt.Fprintln(os.Stderr, "  ix-an verify-dir --strict-approvals examples/receipts")
 		os.Exit(2)
 	}
 
@@ -462,4 +475,82 @@ func joinNotes(items []string) string {
 		out += "; " + items[i]
 	}
 	return out
+}
+
+type boolFlag interface {
+	IsBoolFlag() bool
+}
+
+func normalizeInterspersedFlags(fs *flag.FlagSet, args []string) ([]string, error) {
+	if len(args) == 0 {
+		return nil, nil
+	}
+
+	flags := make([]string, 0, len(args))
+	positionals := make([]string, 0, len(args))
+
+	for i := 0; i < len(args); i++ {
+		arg := args[i]
+
+		if arg == "--" {
+			positionals = append(positionals, args[i+1:]...)
+			break
+		}
+
+		if !strings.HasPrefix(arg, "-") || arg == "-" {
+			positionals = append(positionals, arg)
+			continue
+		}
+
+		name, inlineValue := splitFlagToken(arg)
+		expectsValue := flagExpectsValue(fs, name)
+
+		flags = append(flags, arg)
+
+		if inlineValue {
+			continue
+		}
+
+		if expectsValue {
+			if i+1 >= len(args) {
+				return nil, fmt.Errorf("flag %q requires a value", arg)
+			}
+			i++
+			flags = append(flags, args[i])
+		}
+	}
+
+	return append(flags, positionals...), nil
+}
+
+func splitFlagToken(arg string) (name string, inlineValue bool) {
+	trimmed := strings.TrimLeft(arg, "-")
+	if trimmed == "" {
+		return "", false
+	}
+	before, after, found := strings.Cut(trimmed, "=")
+	if found && after != "" {
+		return before, true
+	}
+	if found {
+		return before, true
+	}
+	return trimmed, false
+}
+
+func flagExpectsValue(fs *flag.FlagSet, name string) bool {
+	if name == "" {
+		return false
+	}
+
+	f := fs.Lookup(name)
+	if f == nil {
+		return false
+	}
+
+	if bf, ok := f.Value.(boolFlag); ok && bf.IsBoolFlag() {
+		return false
+	}
+
+	return true
 }

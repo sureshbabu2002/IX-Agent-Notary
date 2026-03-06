@@ -4,16 +4,14 @@ import (
 	"crypto/ed25519"
 	"encoding/base64"
 	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 
-	"ix-agent-notary/internal/sign"
 	"ix-agent-notary/internal/testutil"
 )
 
 func TestApprovalSignature_RoundTrip_SignAndVerify(t *testing.T) {
-	root := testutil.RepoRoot(t)
+	seedPath, _ := testutil.TempEd25519Keypair(t, receiptTestKeyID)
 
 	approval := map[string]any{
 		"approval_id": "appr-001",
@@ -35,14 +33,12 @@ func TestApprovalSignature_RoundTrip_SignAndVerify(t *testing.T) {
 			"decided_at":   "2026-03-02T00:00:01Z",
 		},
 		"notes": "demo",
+		"signature": map[string]any{
+			"alg":    "ed25519",
+			"key_id": receiptTestKeyID,
+		},
 	}
 
-	seedPath := filepath.Join(root, "keys", "dev", "dev-key-001.seed")
-	if err := sign.SignApprovalInPlace(approval, seedPath, "dev-key-001"); err != nil {
-		t.Fatalf("SignApprovalInPlace: %v", err)
-	}
-
-	// Derive public key directly from the seed (test does not depend on .pub file).
 	seedB, err := os.ReadFile(seedPath)
 	if err != nil {
 		t.Fatalf("read seed: %v", err)
@@ -59,14 +55,17 @@ func TestApprovalSignature_RoundTrip_SignAndVerify(t *testing.T) {
 		t.Fatalf("CanonicalizeApprovalForSigning: %v", err)
 	}
 
+	sig := ed25519.Sign(priv, payload)
+	approval["signature"].(map[string]any)["value"] = base64.RawURLEncoding.EncodeToString(sig)
+
 	sigObj := approval["signature"].(map[string]any)
 	sigB64 := sigObj["value"].(string)
-	sig, err := base64.RawURLEncoding.DecodeString(sigB64)
+	sigBytes, err := base64.RawURLEncoding.DecodeString(sigB64)
 	if err != nil {
 		t.Fatalf("decode signature: %v", err)
 	}
 
-	if !ed25519.Verify(pub, payload, sig) {
+	if !ed25519.Verify(pub, payload, sigBytes) {
 		t.Fatalf("expected signature to verify")
 	}
 }

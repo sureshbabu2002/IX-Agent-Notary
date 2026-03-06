@@ -3,13 +3,17 @@ name: CI
 on:
   push:
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
   checks:
+    name: Go checks
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -20,5 +24,9 @@ jobs:
           go-version-file: go.mod
           cache: true
 
+      - name: Show Go version
+        run: go version
+
       - name: Run repo CI script
+        shell: bash
         run: bash scripts/ci.sh

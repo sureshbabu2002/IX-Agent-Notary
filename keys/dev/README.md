@@ -1,37 +1,51 @@
 # Dev keys (local evaluation)
 
-This directory exists so evaluators have a standard place for **locally-generated** dev keys.
+This directory exists so evaluators have a standard place for **locally generated** dev keys.
 
-Important:
+Important rules:
+
 - **No private keys are committed to this repo.**
 - `*.seed` and `*.pub` under `keys/dev/` are gitignored by design.
-- Treat anything under `keys/dev/` as **demo-only**. Do not use in production.
+- Anything created under `keys/dev/` is **demo-only** and should not be treated as production signing material.
 
----
+## Recommended path
 
-## Generate dev keys + demo receipts (recommended)
-
-Run:
+Generate local dev keys and local demo receipts:
 
 ```bash
 bash scripts/gen_demo_assets.sh
+```
 
 That script will:
 
-generate a local ed25519 keypair (seed + public key), and
+- generate a local ed25519 keypair
+- generate example receipts under `examples/receipts/`
+- strictly verify the generated results
 
-generate example receipts under examples/receipts/, and
+Typical local outputs:
 
-strictly verify the results.
+- `keys/dev/dev-key-001.seed`
+- `keys/dev/dev-key-001.pub`
+- `examples/receipts/*.json`
 
-Outputs (gitignored):
+## Manual key generation
 
-keys/dev/dev-key-001.seed
+If you only want keys:
 
-keys/dev/dev-key-001.pub
-
-examples/receipts/*.json
-
-Manual key generation (optional)
+```bash
 go run ./cmd/ix-an keygen --out-seed keys/dev/dev-key-001.seed --out-pub keys/dev/dev-key-001.pub
+```
 
+## Manual verification example
+
+```bash
+go run ./cmd/ix-an verify \
+  --strict-hashes \
+  --strict-signature \
+  --pubkey keys/dev/dev-key-001.pub \
+  /tmp/allow.receipt.json
+```
+
+## Reminder
+
+Do not publish, reuse, or operationalize local demo keys as if they were production trust anchors.

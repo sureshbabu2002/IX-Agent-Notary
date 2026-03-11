@@ -4,117 +4,85 @@ Receipts are only as trustworthy as the signing keys behind them.
 
 This repo intentionally **does not** ship any private signing material. Private keys must never be committed to a public repository.
 
-## Local evaluation
+---
 
-Generate a local dev keypair and local example receipts:
+## Local evaluation (no secrets committed)
+
+Generate a local dev keypair and example receipts (all **gitignored**):
 
 ```bash
 bash scripts/gen_demo_assets.sh
-```
 
-That creates gitignored local artifacts such as:
+This creates:
 
-- `keys/dev/dev-key-001.seed` — private ed25519 seed
-- `keys/dev/dev-key-001.pub` — public key
-- `examples/receipts/*.json` — generated example receipts
+keys/dev/dev-key-001.seed — private ed25519 seed (0600, gitignored)
 
-Verify the generated receipts strictly:
+keys/dev/dev-key-001.pub — public key (gitignored)
 
-```bash
-go run ./cmd/ix-an verify-dir --strict-approvals examples/receipts
-```
+examples/receipts/*.json — generated receipts (gitignored)
 
-## Manual local flow
+Then verify strictly:
 
-Generate a local keypair:
+go run ./cmd/ix-an verify-dir examples/receipts --strict-approvals
 
-```bash
+If you prefer manual steps:
 go run ./cmd/ix-an keygen --out-seed keys/dev/dev-key-001.seed --out-pub keys/dev/dev-key-001.pub
-```
+go run ./cmd/ix-an simulate --path docs/demo.txt --out /tmp/allow.json --key keys/dev/dev-key-001.seed --key-id dev-key-001
+go run ./cmd/ix-an verify /tmp/allow.json --strict-hashes --strict-signature
 
-Create a signed receipt with that key:
+Production guidance (baseline posture)
+1) Store signing keys in KMS/HSM
 
-```bash
-go run ./cmd/ix-an simulate \
-  --path docs/demo.txt \
-  --out /tmp/allow.receipt.json \
-  --key keys/dev/dev-key-001.seed \
-  --key-id dev-key-001
-```
+Keep private key material hardware-backed when possible (HSM / KMS / Vault with HSM-backed keys).
 
-Verify it with the matching public key:
+Limit permissions to “sign receipt” operations only.
 
-```bash
-go run ./cmd/ix-an verify \
-  --strict-hashes \
-  --strict-signature \
-  --pubkey keys/dev/dev-key-001.pub \
-  /tmp/allow.receipt.json
-```
+Gate signing behind IAM authorization and change control in high-risk environments.
 
-Using `--pubkey` is the most explicit and deterministic way to verify a receipt during evaluation.
+2) Publish a trusted public-key allowlist
 
-## Baseline production posture
+Verification should only accept signatures from:
 
-### 1) Store private keys in KMS or HSM
+a curated set of trusted public keys,
 
-Private key material should be hardware-backed or at least controlled by a hardened signing service.
+mapped to known key_id values,
 
-Minimum posture:
+with an explicit revocation story (even if “manual list update” in v0).
 
-- no raw private keys in public repos
-- no broad filesystem access to signing keys
-- sign-only permission boundary where possible
-- IAM and change control around key usage
+3) Rotate keys without breaking verification
 
-### 2) Publish a trusted public-key allowlist
+Receipts include:
 
-Verification should only accept signatures from a curated set of trusted public keys mapped to known `key_id` values.
-
-At minimum, production needs:
-
-- an explicit list of trusted public keys
-- stable `key_id` naming
-- a process for updating trust when keys rotate or are revoked
-
-### 3) Rotate keys without breaking old verification
-
-Receipts carry:
-
-- `integrity.signature.key_id`
+integrity.signature.key_id
 
 Recommended pattern:
 
-- treat `key_id` as a specific key version, not a floating alias
-- rotate by minting a new key and a new `key_id`
-- keep historical public keys available so older receipts remain verifiable
+treat key_id as immutable for a specific key version (e.g., notary-prod-2026-03)
 
-### 4) Separate trust domains where appropriate
+rotate by issuing a new key and a new key_id
 
-Higher-assurance deployments may want:
+keep historical public keys available so old receipts remain verifiable
 
-- one trust domain for receipt signing
-- another trust domain for approval signing
-- separate operational ownership for each
+4) Separate domains (optional, but stronger)
 
-That reduces the blast radius of a single compromise.
+For higher assurance:
 
-## What good key hygiene protects against
+use a distinct key for the notary’s receipt signing
 
-Good key handling helps defend against:
+and separate keys for human/ticket approvals (different trust domain)
 
-- receipt tampering
-- fabricated receipts
-- unverifiable “audit theater”
-- silent evidence drift
-- accidental trust in unknown signing identities
+Threats this mitigates
 
-## Practical rule
+Receipt tampering (signature fails)
 
-If a buyer cannot answer **which keys are trusted, where they live, how they rotate, and how old receipts stay verifiable**, the evaluation is not production-credible yet.
+Receipt fabrication (unknown key_id / untrusted public key)
 
-## Related documents
+“audit theater” placeholders (strict verifier rejects)
 
-- `docs/THREAT_MODEL.md`
-- `docs/POLICY_INTEGRITY.md`
-- `docs/APPROVALS.md`
+Silent evidence drift (hash + signature binds the canonical receipt payload)
+
+See also:
+
+docs/THREAT_MODEL.md
+
+docs/POLICY_INTEGRITY.md

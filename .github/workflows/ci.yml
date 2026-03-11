@@ -3,17 +3,13 @@ name: CI
 on:
   push:
   pull_request:
-  workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
   checks:
-    name: Go checks
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -24,9 +20,36 @@ jobs:
           go-version-file: go.mod
           cache: true
 
-      - name: Show Go version
-        run: go version
-
       - name: Run repo CI script
-        shell: bash
         run: bash scripts/ci.sh
+
+      # Even if the CI script fails, we still want go.sum for copy/paste.
+      - name: Ensure go.sum exists (copy/paste helper)
+        if: always()
+        continue-on-error: true
+        run: |
+          # Attempt to build/test to force module resolution (best signal).
+          go test ./... || true
+          # Fallback: download module graph if go.sum still doesn't exist.
+          if [ ! -f go.sum ]; then
+            go mod download || true
+          fi
+
+      - name: Print go.sum (copy/paste)
+        if: always()
+        run: |
+          echo "GO_SUM_BEGIN"
+          if [ -f go.sum ]; then
+            cat go.sum
+          else
+            echo "(go.sum not present)"
+          fi
+          echo "GO_SUM_END"
+
+      - name: Upload go.sum artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: go-sum
+          path: go.sum
+          if-no-files-found: warn

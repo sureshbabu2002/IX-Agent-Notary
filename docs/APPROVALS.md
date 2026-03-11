@@ -1,134 +1,75 @@
 # Approvals (v0)
 
-Enterprises do not just want “the policy allowed it.” They want governance evidence:
+Enterprises don’t just want “policy allowed it.” They want governance evidence:
+- who approved,
+- what exactly was approved,
+- when it was approved,
+- and (optionally) a signature from the approver identity.
 
-- who approved
-- what exactly was approved
-- when it was approved
-- whether the approval can be independently verified
+IX-Agent-Notary models this as structured objects inside: `policy.approvals[]`.
 
-IX-Agent-Notary models that evidence as structured objects inside `policy.approvals[]`.
+---
 
-## Approval object
+## Approval object (schema-backed)
 
 Each approval is a JSON object with these required fields:
 
-- `approval_id` — unique identifier for the approval record
-- `type` — one of:
-  - `human`
-  - `ticket`
-  - `breakglass`
-- `status` — one of:
-  - `requested`
-  - `approved`
-  - `denied`
-  - `expired`
-  - `revoked`
-- `approver` — object with:
-  - `type`
-  - `id`
-  - optional `display`
-- `scope` — object with:
-  - `kind`
-  - `tool`
-  - `operation`
-  - optional `resource`
-- `time` — object with:
-  - `requested_at`
-  - `decided_at`
-  - optional `expires_at`
+- `approval_id` (string) — unique ID for the approval record
+- `type` (enum) — `human | ticket | breakglass`
+- `status` (enum) — `requested | approved | denied | expired | revoked`
+- `approver` (object)
+  - `type` (string) — e.g. `user`, `service`, `group`
+  - `id` (string) — stable identifier (email, IAM principal, etc.)
+  - `display` (string, optional)
+- `scope` (object)
+  - `kind` (string) — e.g. `tool.invoke`
+  - `tool` (string)
+  - `operation` (string)
+  - `resource` (string, optional) — e.g. path, URL, ARN, ticket ID, etc.
+- `time` (object)
+  - `requested_at` (date-time)
+  - `decided_at` (date-time)
+  - `expires_at` (date-time, optional)
 
 Optional fields:
+- `notes` (string)
+- `signature` (object)
+  - `alg` (string) — `ed25519`
+  - `key_id` (string)
+  - `value` (string) — signature over canonical approval payload (RFC8785), including `signature.alg` and `signature.key_id`, but excluding `signature.value`
 
-- `notes`
-- `signature`
+---
 
-## Approval signature object
+## Approval signatures (implemented)
 
-When present, `signature` must be an object with:
-
-- `alg`
-- `key_id`
-- `value`
-
-In the current implementation, approval signing uses the same canonicalization rule as receipt signing:
-
-- canonical JSON via **RFC8785-JCS**
-- sign the approval payload while excluding `signature.value`
-- store the signature as base64url text
-
-## Current implementation behavior
-
-### What the simulator does
-
-The simulator can embed a single approval record when `--approve` is provided.
-
-Example:
+### Simulator emits signed approvals
+Run:
 
 ```bash
-go run ./cmd/ix-an simulate \
-  --path docs/approved.txt \
-  --out /tmp/approved.receipt.json \
-  --approve \
-  --approver you@example.com \
-  --approval-type ticket
-```
+go run ./cmd/ix-an simulate --path docs/approved.txt --out /tmp/approved.receipt.json \
+  --approve --approver you@example.com --approval-type ticket
 
-In the current demo flow, the simulator signs the approval object using the same signing key used for the receipt.
+The simulator signs the approval object (demo uses the same key as receipt signing).
 
-### What strict approval verification means
+Verifier can enforce signed approvals
 
-Use `--strict-approvals` when verifying a receipt:
+Run:
+go run ./cmd/ix-an verify /tmp/approved.receipt.json --strict-approvals --strict-hashes --strict-signature
 
-```bash
-go run ./cmd/ix-an verify \
-  --strict-hashes \
-  --strict-signature \
-  --strict-approvals \
-  /tmp/approved.receipt.json
-```
+Strict approvals means:
 
-Under strict approval verification:
+if approvals exist, each approval must include a signature
 
-- if approvals are present, each approval must include a signature
-- each approval signature must verify successfully
-- malformed or unsigned approvals cause verification failure
+each signature must verify
 
-Without `--strict-approvals`, approvals may still be present in the receipt, but the verifier will not require signatures on them.
+Why approvals matter (buyer value)
 
-## Why approvals matter
+Approvals turn receipts into auditable governance artifacts:
 
-Approvals turn receipts into governance artifacts instead of plain execution logs.
+SOC2 / ISO27001 evidence
 
-That matters for:
+change-management linkage (ticket approvals)
 
-- SOC 2 and ISO 27001 evidence trails
-- change-management linkage
-- break-glass event recording
-- higher-assurance workflows where risky actions need separate human or ticket authorization
+break-glass logging (incident-time access)
 
-## Practical interpretation
-
-An approval does **not** replace policy.  
-It complements policy.
-
-The pattern is:
-
-1. policy says whether the action class is even eligible
-2. approvals carry governance context for actions that require explicit sign-off
-3. the receipt binds policy evidence, approval evidence, and execution evidence into one verifiable record
-
-## v0 scope
-
-Current v0 support is intentionally small:
-
-- one or more structured approval objects in `policy.approvals[]`
-- optional approval signatures
-- strict verification mode for approval signatures
-
-Future enterprise-grade extensions could add:
-
-- quorum approvals
-- separate approval trust domains
-- external ticket-system binding
-- expiry and revocation workflows tied to policy engines
+least-privilege + “two-person rule” patterns (future extension)

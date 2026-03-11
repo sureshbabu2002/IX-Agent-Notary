@@ -13,13 +13,15 @@ type ReceiptValidationOptions struct {
 	StrictSignature bool
 	StrictApprovals bool
 	PublicKeyPath   string
-	PublicKeyDir    string
 }
 
+// CompileSchema compiles the receipt JSON Schema once for reuse.
 func CompileSchema(schemaPath string) (*jsonschema.Schema, error) {
 	return compileSchema(schemaPath)
 }
 
+// ValidateReceiptObject validates a loaded receipt object.
+// It always validates schema; then (optionally strict) hashes/signature/approvals.
 func ValidateReceiptObject(
 	r receipt.Receipt,
 	schema *jsonschema.Schema,
@@ -41,7 +43,6 @@ func ValidateReceiptObject(
 	sc, err := receipt.ValidateSignature(r, receipt.SignatureValidationOptions{
 		Strict:        opts.StrictSignature,
 		PublicKeyPath: opts.PublicKeyPath,
-		PublicKeyDir:  opts.PublicKeyDir,
 	})
 	if err != nil {
 		return receipt.HashCheck{}, receipt.SignatureCheck{}, receipt.ApprovalSigCheck{}, err
@@ -50,7 +51,6 @@ func ValidateReceiptObject(
 	ac, err := receipt.ValidateApprovalSignatures(r, receipt.ApprovalSigValidationOptions{
 		Strict:        opts.StrictApprovals,
 		PublicKeyPath: opts.PublicKeyPath,
-		PublicKeyDir:  opts.PublicKeyDir,
 	})
 	if err != nil {
 		return receipt.HashCheck{}, receipt.SignatureCheck{}, receipt.ApprovalSigCheck{}, err

